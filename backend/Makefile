@@ -9,7 +9,11 @@ DB_NAME=stage
 DB_URL=postgres://$(DB_USER):$(DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)?sslmode=disable
 MIGRATIONS_PATH=cmd/migrations
 
-.PHONY: migrate-up migrate-down migrate-force
+.PHONY: run migrate-up migrate-down migrate-force 
+
+#Run App
+run:
+	go run cmd/main.go
 
 # Run all up migrations
 migrate-up:
