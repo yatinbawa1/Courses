@@ -47,17 +47,17 @@ func generateOTP() string {
 // Sign Up Logic	"POST /sign-up/"
 // --------------------
 
-type SignUp struct {
+type SendOTP struct {
 	l           *log.Logger
 	authService *auth.AuthService
 	mailClient  mailer.MailSender
 }
 
-func NewSignUpHandler(l *log.Logger, authService *auth.AuthService, mailer mailer.MailSender) *SignUp {
-	return &SignUp{l, authService, mailer}
+func NewSendOTPHandler(l *log.Logger, authService *auth.AuthService, mailer mailer.MailSender) *SendOTP {
+	return &SendOTP{l, authService, mailer}
 }
 
-func (s *SignUp) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
+func (s *SendOTP) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
 	var user models.User
