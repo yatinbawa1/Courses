@@ -1,41 +1,34 @@
 package database
 
 import (
-	"database/sql"
+	"context"
 	"fmt"
-	"os"
 	"strconv"
 
-	_ "github.com/lib/pq"
+	"courses/internal/config"
+
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-var DB *sql.DB
+func ConnectDataBase() (*pgxpool.Pool, error) {
+	host := config.DBHost
+	port, _ := strconv.Atoi(config.DBPort)
+	user := config.DBUser
+	dbname := config.DBName
+	pass := config.DBPassword
 
-func nn(a error, b error) error {
-	if a != nil {
-		return a
+	connString := fmt.Sprintf("postgres://%s:%s@%s:%d/%s", user, pass, host, port, dbname)
+	ctx := context.Background()
+
+	dbpool, err := pgxpool.New(ctx, connString)
+	if err != nil {
+		return nil, fmt.Errorf("Unable to create connection pool: %v\n", err)
 	}
 
-	return b
-}
-
-func ConnectDataBase() error {
-
-	host := os.Getenv("DB_HOST")
-	port, _ := strconv.Atoi(os.Getenv("DB_PORT"))
-	user := os.Getenv("DB_USER")
-	dbname := os.Getenv("DB_NAME")
-	pass := os.Getenv("DB_PASSWORD")
-
-	psqlConnectionString := fmt.Sprintf("host=%s port=%d user=%s dbname=%s password=%s sslmode=disable", host, port, user, dbname, pass)
-
-	db, errSql := sql.Open("postgres", psqlConnectionString)
-	err := db.Ping()
-
-	if errSql != nil || err != nil {
-		return fmt.Errorf("Unable to Connect to Database because of the following error: \n\033[31m%w\033[0m", nn(errSql, err))
-	} else {
-		DB = db
-		return nil
+	err = dbpool.Ping(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("Could not ping database: %v", err)
 	}
+
+	return dbpool, nil
 }

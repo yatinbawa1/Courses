@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"courses/internal/auth"
+	"courses/internal/config"
 	"courses/internal/database"
 	"courses/internal/handlers"
 	"log"
@@ -29,7 +30,8 @@ func main() {
 
 	// Initialize Everything
 	LoadEnv(logger)
-	err := database.ConnectDataBase()
+	config.Init()
+	_, err := database.ConnectDataBase()
 
 	if err != nil {
 		logger.Fatalf("%s", err)
@@ -42,13 +44,13 @@ func main() {
 
 	server := &http.Server{
 		Handler:      mux,
-		Addr:         os.Getenv("PORT"),
+		Addr:         config.Port,
 		IdleTimeout:  120 * time.Second,
 		ReadTimeout:  1 * time.Second,
 		WriteTimeout: 1 * time.Second,
 	}
 
-	logger.Printf("Server Starting on Port %s\n", os.Getenv("PORT"))
+	logger.Printf("Server Starting on Port %s\n", config.Port)
 
 	go func() {
 		err := server.ListenAndServe()
