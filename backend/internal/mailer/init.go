@@ -32,7 +32,7 @@ func (m *ResendMailer) SendOTPMail(ctx context.Context, user *models.User, otp s
 	}
 
 	params := &resend.SendEmailRequest{
-		From:    "noreply@yourdomain.com",
+		From:    "yatinabc3@gmail.com",
 		To:      []string{user.Email},
 		Subject: "Your Verification Code",
 		Html:    hmx,
