@@ -6,41 +6,42 @@ import (
 	"courses/internal/config"
 	"courses/internal/database"
 	"courses/internal/handlers"
+	"courses/internal/mailer"
+	"courses/internal/repository"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
-
-	"github.com/joho/godotenv"
 )
 
-func LoadEnv(l *log.Logger) {
-	err := godotenv.Load()
-
-	if err != nil {
-		l.Printf("Unable to locate ENV File")
-	}
-}
-
 func main() {
-
 	logger := log.New(os.Stdout, "\nCourses-", log.Default().Flags())
 
-	// Initialize Everything
-	LoadEnv(logger)
-	config.Init()
-	_, err := database.ConnectDataBase()
-
+	// Initialize ENV
+	// And Database and Redis
+	config.Init(logger)
+	pool, err := database.ConnectDataBase()
 	if err != nil {
-		logger.Fatalf("%s", err)
+		logger.Fatalf("Unable to connect with Database %w", err)
 	}
+	defer pool.Close()
 
-	mux := http.NewServeMux()
+	redisClient, err := database.NewRedisClient(config.REDIS_ADDR, "", 0)
+	if err != nil {
+		logger.Fatalf("Unable to Connect With Redis %w", err)
+	}
+	defer redisClient.Close()
 
-	mux.Handle("/", handlers.NewHomeHandler(logger))
-	mux.Handle("POST /", handlers.NewLoginHandler(logger, auth.VerifyToken))
+	// Initialize Core Services
+	mailClient := mailer.MailConfig()
+	otpRepo := repository.NewRedisOTPRepo(redisClient)
+	userRepo := repository.NewUserRepo(pool)
+	authService := auth.NewAuthService(userRepo, otpRepo)
+
+	// Set up a router
+	mux := handlers.RegisterRoutes(logger, authService, mailClient)
 
 	server := &http.Server{
 		Handler:      mux,
@@ -63,7 +64,7 @@ func main() {
 	signal.Notify(SigChan, os.Interrupt, syscall.SIGTERM)
 
 	sig := <-SigChan
-	logger.Fatalf("Received %s Signal! Initiating Exit Routine", sig)
+	logger.Printf("Received %s Signal! Initiating Exit Routine", sig)
 
 	timeoutContext, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()

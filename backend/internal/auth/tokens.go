@@ -15,7 +15,7 @@ func CreateToken(email string) (string, error) {
 		"exp":   time.Now().Add(time.Hour * 24).Unix(),
 	})
 
-	tokenString, err := token.SignedString(config.JWTSecret)
+	tokenString, err := token.SignedString([]byte(config.JWTSecret))
 	if err != nil {
 		return "", err
 	}

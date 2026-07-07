@@ -23,7 +23,7 @@ func NewUserRepo(db *pgxpool.Pool) *UserRepo {
 }
 
 func (r *UserRepo) Add(ctx context.Context, user *models.User) error {
-	query := `INSERT INTO User(user_id,hashed_password, email) values ($1,$2,$3)`
+	query := `INSERT INTO "User" (user_id,hashed_password, email) values ($1,$2,$3)`
 
 	_, err := r.db.Exec(ctx, query, user.User_id, user.HashedPassword, user.Email)
 

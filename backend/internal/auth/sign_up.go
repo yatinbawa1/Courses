@@ -4,6 +4,7 @@ import (
 	"context"
 	"courses/internal/models"
 	"errors"
+	"strings"
 
 	"regexp"
 
@@ -23,6 +24,8 @@ var (
 )
 
 func (a *AuthService) SignUpUsingEmailAndPassword(ctx context.Context, email string, password string) (string, error) {
+
+	email = strings.ToLower(email)
 
 	if len(password) < 8 || !hasLower.MatchString(password) || !hasUpper.MatchString(password) || !hasNum.MatchString(password) {
 		return "", ErrUnsecurePassword
