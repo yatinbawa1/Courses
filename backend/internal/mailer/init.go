@@ -26,7 +26,7 @@ func NewResendMailer() *ResendMailer {
 
 func (m *ResendMailer) SendOTPMail(ctx context.Context, user *models.User, otp string) error {
 
-	hmx, err := GenerateEmailHTML(user.Email, otp)
+	hmx, err := GenerateOTPEmail(user.Email, otp)
 	if err != nil {
 		return fmt.Errorf("Unable to Generate HTML for Sending OTP %w", err)
 	}

@@ -47,7 +47,7 @@ func (a *AuthService) SignUpUsingEmailAndPassword(ctx context.Context, email str
 		Revenue:         0,
 	}
 
-	err = a.userRepo.Add(ctx, user)
+	err = a.UserRepo.Add(ctx, user)
 	if err != nil {
 		return "", err
 	}

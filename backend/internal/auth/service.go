@@ -7,8 +7,8 @@ import (
 )
 
 type AuthService struct {
-	userRepo UserDataRepo
-	otpRepo  repository.OTPRepo
+	UserRepo UserDataRepo
+	OtpRepo  repository.OTPRepo
 }
 
 type UserDataRepo interface {

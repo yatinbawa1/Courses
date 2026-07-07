@@ -13,6 +13,7 @@ func RegisterRoutes(logger *log.Logger, authService *auth.AuthService, mailer ma
 	mux.Handle("/", NewHomeHandler(logger))
 	mux.Handle("POST /login", NewLoginHandler(logger, authService))
 	mux.Handle("POST /sign-up", NewSignUpHandler(logger, authService, mailer))
+	mux.Handle("POST /sign-up/verify", NewVerifyOTP(logger, authService))
 
 	return mux
 }

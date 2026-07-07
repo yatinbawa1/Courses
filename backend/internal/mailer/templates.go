@@ -6,9 +6,10 @@ import (
 	"text/template"
 )
 
+//go:embed templates
 var templateFS embed.FS
 
-func GenerateEmailHTML(email string, code string) (string, error) {
+func GenerateOTPEmail(email string, code string) (string, error) {
 
 	tmpl, err := template.ParseFS(templateFS, "templates/otp.html")
 
