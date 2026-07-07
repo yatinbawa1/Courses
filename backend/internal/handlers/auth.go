@@ -44,9 +44,8 @@ func generateOTP() string {
 }
 
 // --------------------
-// Sign Up Logic	"POST /sign-up/"
+// Send OTP Logic	"POST /send-otp"
 // --------------------
-
 type SendOTP struct {
 	l           *log.Logger
 	authService *auth.AuthService
@@ -68,11 +67,24 @@ func (s *SendOTP) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	exist, err := s.authService.UserRepo.CheckIfEmailExists(r.Context(), user.Email)
+	if err != nil {
+		rw.WriteHeader(http.StatusInternalServerError)
+		rw.Write([]byte("Unable To Check User Email In Database"))
+		return
+	}
+
+	if exist {
+		rw.WriteHeader(http.StatusConflict)
+		rw.Write([]byte("Email Already Exists! Kindly Use Another Email"))
+		return
+	}
+
 	otp := generateOTP()
 	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 	defer cancel()
 
-	err = s.authService.OtpRepo.SaveOTP(r.Context(), user.Email, otp, time.Second*3600)
+	err = s.authService.OtpRepo.SaveOTP(ctx, user.Email, otp, time.Second*3600)
 	if err != nil {
 		rw.WriteHeader(http.StatusInternalServerError)
 		ans := fmt.Sprintf("Unable to Save OTP in Redis! %s", err)
@@ -80,13 +92,15 @@ func (s *SendOTP) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = s.mailClient.SendOTPMail(ctx, &user, otp)
-	if err != nil {
-		rw.WriteHeader(http.StatusInternalServerError)
-		ans := fmt.Sprintf("Unable to Send Email! %s", err)
-		rw.Write([]byte(ans))
-		return
-	}
+	go func(email, otp string) {
+		ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+		defer cancel()
+
+		err = s.mailClient.SendOTPMail(ctx, &user, otp)
+		if err != nil {
+			s.l.Printf("Failed To Send Email To %s: %v", email, err)
+		}
+	}(user.Email, otp)
 
 	rw.WriteHeader(http.StatusOK)
 	rw.Write([]byte("OTP Sent!"))
@@ -127,7 +141,10 @@ func (v *VerifyOTP) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	val, err := v.authService.OtpRepo.VerifyOTP(r.Context(), user.Email, user.OTP)
+	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+	defer cancel()
+
+	val, err := v.authService.OtpRepo.VerifyOTP(ctx, user.Email, user.OTP)
 	if err != nil || !val {
 		rw.WriteHeader(http.StatusBadRequest)
 		ans := fmt.Sprintf("Unable to verify OTP! %s", err)
@@ -135,7 +152,10 @@ func (v *VerifyOTP) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, err := v.authService.SignUpUsingEmailAndPassword(r.Context(), user.Email, user.Password)
+	ctx2, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+	defer cancel()
+
+	token, err := v.authService.SignUpUsingEmailAndPassword(ctx2, user.Email, user.Password)
 	if err != nil {
 		rw.WriteHeader(http.StatusBadRequest)
 		rw.Write([]byte(err.Error()))

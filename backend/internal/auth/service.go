@@ -13,6 +13,7 @@ type AuthService struct {
 
 type UserDataRepo interface {
 	Add(ctx context.Context, use *models.User) error
+	CheckIfEmailExists(ctx context.Context, email string) (bool, error)
 }
 
 func NewAuthService(userRepo UserDataRepo, otpRepo repository.OTPRepo) *AuthService {

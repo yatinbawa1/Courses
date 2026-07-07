@@ -9,7 +9,7 @@ DB_NAME=stage
 DB_URL=postgres://$(DB_USER):$(DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)?sslmode=disable
 MIGRATIONS_PATH=cmd/migrations
 
-.PHONY: run migrate-up migrate-down migrate-force 
+.PHONY: run migrate-up migrate-down migrate-force delete-all-users
 
 #Run App
 run:
@@ -26,3 +26,6 @@ migrate-down:
 # Force clear a dirty migration state (usage: make migrate-force v=1)
 migrate-force:
 	migrate -path $(MIGRATIONS_PATH) -database "$(DB_URL)" force $(v)
+
+delete-all-users:
+	docker exec -i courses-psql psql "$(DB_URL)" < internal/database/migrations/delete_all_user.sql

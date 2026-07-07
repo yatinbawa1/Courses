@@ -9,21 +9,16 @@ import (
 //go:embed templates
 var templateFS embed.FS
 
+var otpTmpl = template.Must(template.ParseFS(templateFS, "templates/otp.html"))
+
 func GenerateOTPEmail(email string, code string) (string, error) {
-
-	tmpl, err := template.ParseFS(templateFS, "templates/otp.html")
-
-	if err != nil {
-		return "", err
-	}
-
 	var body bytes.Buffer
 	data := map[string]string{
 		"code":  code,
 		"Email": email,
 	}
 
-	if err := tmpl.Execute(&body, data); err != nil {
+	if err := otpTmpl.Execute(&body, data); err != nil {
 		return "", err
 	}
 

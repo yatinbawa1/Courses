@@ -31,7 +31,7 @@ func (a *AuthService) SignUpUsingEmailAndPassword(ctx context.Context, email str
 		return "", ErrUnsecurePassword
 	}
 
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), 14)
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), 11)
 	if err != nil {
 		return "", ErrUnsecurePassword
 	}

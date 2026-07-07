@@ -5,7 +5,9 @@ import (
 	"courses/internal/models"
 	"errors"
 	"fmt"
+	"strings"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -20,6 +22,28 @@ type UserRepo struct {
 
 func NewUserRepo(db *pgxpool.Pool) *UserRepo {
 	return &UserRepo{db: db}
+}
+
+func (r *UserRepo) CheckIfEmailExists(ctx context.Context, email string) (bool, error) {
+	email = strings.ToLower(email)
+
+	query := `SELECT EXISTS (
+    SELECT 1 
+    FROM "User" 
+    WHERE email = $1
+	);`
+
+	var exists bool
+	err := r.db.QueryRow(ctx, query, email).Scan(&exists)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return false, nil
+		}
+
+		return false, fmt.Errorf("Failed To Check Email! Internal Error %w", err)
+	}
+
+	return exists, nil
 }
 
 func (r *UserRepo) Add(ctx context.Context, user *models.User) error {
