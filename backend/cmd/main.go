@@ -24,24 +24,25 @@ func main() {
 	config.Init(logger)
 	pool, err := database.ConnectDataBase()
 	if err != nil {
-		logger.Fatalf("Unable to connect with Database %w", err)
+		logger.Fatalf("Unable to connect with Database %s", err)
 	}
 	defer pool.Close()
 
 	redisClient, err := database.NewRedisClient(config.REDIS_ADDR, "", 0)
 	if err != nil {
-		logger.Fatalf("Unable to Connect With Redis %w", err)
+		logger.Fatalf("Unable to Connect With Redis %s", err)
 	}
+
 	defer redisClient.Close()
 
 	// Initialize Core Services
-	mailClient := mailer.MailConfig()
+	resendMailer := mailer.NewResendMailer()
 	otpRepo := repository.NewRedisOTPRepo(redisClient)
 	userRepo := repository.NewUserRepo(pool)
 	authService := auth.NewAuthService(userRepo, otpRepo)
 
 	// Set up a router
-	mux := handlers.RegisterRoutes(logger, authService, mailClient)
+	mux := handlers.RegisterRoutes(logger, authService, resendMailer)
 
 	server := &http.Server{
 		Handler:      mux,

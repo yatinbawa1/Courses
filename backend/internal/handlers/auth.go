@@ -2,12 +2,11 @@ package handlers
 
 import (
 	"courses/internal/auth"
+	"courses/internal/mailer"
 	"courses/internal/models"
 	"encoding/json"
 	"log"
 	"net/http"
-
-	"github.com/resend/resend-go/v3"
 )
 
 // --------------------
@@ -33,11 +32,11 @@ func (l *Login) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 type SignUp struct {
 	l           *log.Logger
 	authService *auth.AuthService
-	mailClient  *resend.Client
+	mailClient  mailer.MailSender
 }
 
-func NewSignUpHandler(l *log.Logger, authService *auth.AuthService, mailClient *resend.Client) *SignUp {
-	return &SignUp{l, authService, mailClient}
+func NewSignUpHandler(l *log.Logger, authService *auth.AuthService, mailer mailer.MailSender) *SignUp {
+	return &SignUp{l, authService, mailer}
 }
 
 func (s *SignUp) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
