@@ -2,12 +2,15 @@ package main
 
 import (
 	"context"
+	backend "courses"
 	"courses/internal/auth"
 	"courses/internal/config"
 	"courses/internal/database"
 	"courses/internal/handlers"
 	"courses/internal/mailer"
 	"courses/internal/repository"
+	"embed"
+	"io/fs"
 	"log"
 	"net/http"
 	"os"
@@ -15,6 +18,8 @@ import (
 	"syscall"
 	"time"
 )
+
+var frontendFS embed.FS
 
 func main() {
 	logger := log.New(os.Stdout, "\nCourses-", log.Default().Flags())
@@ -35,6 +40,14 @@ func main() {
 
 	defer redisClient.Close()
 
+	// Initialize Frontend
+	strippedFS, err := fs.Sub(backend.FrontendFS, "dist")
+	if err != nil {
+		log.Fatal("Failed to read embedded folder: ", err)
+	}
+
+	fileServer := http.FileServer(http.FS(strippedFS))
+
 	// Initialize Core Services
 	resendMailer := mailer.NewResendMailer()
 	otpRepo := repository.NewRedisOTPRepo(redisClient)
@@ -42,7 +55,7 @@ func main() {
 	authService := auth.NewAuthService(userRepo, otpRepo)
 
 	// Set up a router
-	mux := handlers.RegisterRoutes(logger, authService, resendMailer)
+	mux := handlers.RegisterRoutes(fileServer, logger, authService, resendMailer)
 
 	server := &http.Server{
 		Handler:      mux,
