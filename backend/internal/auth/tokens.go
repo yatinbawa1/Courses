@@ -1,7 +1,9 @@
 package auth
 
 import (
+	"context"
 	"fmt"
+	"log"
 	"time"
 
 	"courses/internal/config"
@@ -23,18 +25,21 @@ func CreateToken(email string) (string, error) {
 	return tokenString, nil
 }
 
-func VerifyToken(tokenString string) error {
+func VerifyToken(cntx context.Context, tokenString string) (context.Context, error) {
+	log.Printf("Verifying Token: %s", tokenString)
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (any, error) {
-		return config.JWTSecret, nil
+		return []byte(config.JWTSecret), nil
 	})
+	log.Printf("Verifying Token: Token Parsed errors: %w", err)
 
 	if err != nil {
-		return err
+		return cntx, err
 	}
 
-	if !token.Valid {
-		return fmt.Errorf("Invalid Token")
+	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+		ctx := context.WithValue(cntx, "claims", claims)
+		return ctx, nil
 	}
 
-	return nil
+	return cntx, fmt.Errorf("Unauthorized")
 }

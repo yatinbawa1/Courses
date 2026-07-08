@@ -8,16 +8,6 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-type OTPRepo interface {
-	SaveOTP(ctx context.Context, email string, code string, tll time.Duration) error
-	VerifyOTP(ctx context.Context, email string, code string) (bool, error)
-}
-
-// Interface is Being Implemented
-// For Redis, Can also do
-// For Any other DBMS by Just Implementing
-// Features in OTPRepo
-
 type RedisOTPRepo struct {
 	rdbs *redis.Client
 }
