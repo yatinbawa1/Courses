@@ -5,7 +5,7 @@ A full-stack e-learning platform where users can **buy** and **sell** courses. I
 ## Tech Stack
 
 - **Backend:** Go (PostgreSQL, JWT auth)
-- **Frontend:** Next.js (React, TypeScript, Tailwind CSS)
+- **Frontend:** Svelt Kit (TypeScript, Tailwind CSS)
 
 ## Project Structure
 
@@ -23,7 +23,7 @@ A full-stack e-learning platform where users can **buy** and **sell** courses. I
 │   │   └── repository/         # Data access: PostgreSQL (users), Redis (OTP)
 │   ├── .air.toml               # Hot-reload config (Air)
 │   └── Makefile                # run, migrate-up/down, delete-all-users
-├── frontend/                   # Next.js application
+├── frontend/                   # SveltKit application
 │   └── app/                    # App router pages
 ```
 

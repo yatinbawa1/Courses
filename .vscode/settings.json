@@ -9,6 +9,7 @@
     "pgxpool",
     "psql",
     "Refreshcookie",
-    "sslmode"
-]
+    "sslmode",
+    "Svelt"
+  ]
 }
