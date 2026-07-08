@@ -7,6 +7,7 @@ import (
 	"courses/internal/models"
 	"crypto/rand"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"math/big"
@@ -27,8 +28,36 @@ func NewLoginHandler(l *log.Logger, authService *auth.AuthService) *Login {
 }
 
 func (l *Login) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
+	defer r.Body.Close()
 
+	var user models.User
+	json.NewDecoder(r.Body).Decode(&user)
+	token, err := l.authService.LoginWithEmailPassword(r.Context(), user.Email, user.HashedPassword)
+	if err != nil {
+		if errors.Is(err, auth.ErrUserDoesNotExist) {
+			rw.WriteHeader(http.StatusNotFound)
+			rw.Write([]byte("User Does Not Exists!"))
+			return
+		} else if errors.Is(err, auth.ErrWrongPassword) {
+			rw.WriteHeader(http.StatusBadRequest)
+			rw.Write([]byte("Wrong Password!"))
+			return
+		}
+
+		rw.WriteHeader(http.StatusInternalServerError)
+		errV := fmt.Sprintf("Internal Server Error! Could Not Login %v", err)
+		rw.Write([]byte(errV))
+		return
+	}
+
+	rw.WriteHeader(http.StatusOK)
+	output := fmt.Sprintf("{\"RefreshToken\": \"%s\", \"AccessToken\": \"%s\"}", token[0], token[1])
+	rw.Write([]byte(output))
 }
+
+// --------------------
+// Send OTP Logic	"POST /send-otp"
+// --------------------
 
 func generateOTP() string {
 	max := big.NewInt(900000)
@@ -43,9 +72,6 @@ func generateOTP() string {
 	return fmt.Sprintf("%d", otp)
 }
 
-// --------------------
-// Send OTP Logic	"POST /send-otp"
-// --------------------
 type SendOTP struct {
 	l           *log.Logger
 	authService *auth.AuthService
@@ -124,9 +150,6 @@ type VerifyOTP struct {
 func NewVerifyOTP(l *log.Logger, authService *auth.AuthService) *VerifyOTP {
 	return &VerifyOTP{l, authService}
 }
-
-// TODO: Implement a Basic Queue for Sending Emails
-// Using Redis
 
 func (v *VerifyOTP) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()

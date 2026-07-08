@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"courses/internal/auth"
 	"courses/internal/models"
 	"errors"
 	"fmt"
@@ -44,6 +45,25 @@ func (r *UserRepo) CheckIfEmailExists(ctx context.Context, email string) (bool, 
 	}
 
 	return exists, nil
+}
+
+func (r *UserRepo) GetPasswordForEmail(ctx context.Context, email string) ([]byte, error) {
+	email = strings.ToLower(email)
+	query := `SELECT hashed_password FROM "User" WHERE email = $1;`
+
+	var storedHash string
+	err := r.db.QueryRow(ctx, query, email).Scan(&storedHash)
+
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return []byte{}, auth.ErrUserDoesNotExist
+		} else {
+			// A Internal Log for Error Can Be Added Here
+			return []byte{}, err
+		}
+	}
+
+	return []byte(storedHash), nil
 }
 
 func (r *UserRepo) Add(ctx context.Context, user *models.User) error {

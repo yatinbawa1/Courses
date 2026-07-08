@@ -21,7 +21,33 @@ var (
 var (
 	ErrUnsecurePassword       = errors.New("Password Not Secure Enough")
 	ErrPasswordHashGeneration = errors.New("Unable to create a Secure Hash for Password")
+	ErrWrongPassword          = errors.New("Wrong Password")
+	ErrUserDoesNotExist       = errors.New("User Does Not Exist") // Used By User Repo
 )
+
+func (a *AuthService) LoginWithEmailPassword(ctx context.Context, email string, password string) ([2]string, error) {
+	pass, err := a.UserRepo.GetPasswordForEmail(ctx, email)
+	if err != nil {
+		return [2]string{}, err
+	}
+
+	err = bcrypt.CompareHashAndPassword(pass, []byte(password))
+	if err != nil {
+		return [2]string{}, ErrWrongPassword
+	}
+
+	refreshToken, err := CreateRefreshToken(email)
+	if err != nil {
+		return [2]string{}, err
+	}
+
+	accessToken, err := CreateAccessToken(refreshToken)
+	if err != nil {
+		return [2]string{}, err
+	}
+
+	return [2]string{refreshToken, accessToken}, nil
+}
 
 func (a *AuthService) SignUpUsingEmailAndPassword(ctx context.Context, email string, password string) (string, error) {
 
@@ -52,7 +78,7 @@ func (a *AuthService) SignUpUsingEmailAndPassword(ctx context.Context, email str
 		return "", err
 	}
 
-	token, err := CreateToken(email)
+	token, err := CreateRefreshToken(email)
 	if err != nil {
 		return "", err
 	}

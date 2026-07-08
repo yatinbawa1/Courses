@@ -14,6 +14,7 @@ type AuthService struct {
 type UserDataRepo interface {
 	Add(ctx context.Context, use *models.User) error
 	CheckIfEmailExists(ctx context.Context, email string) (bool, error)
+	GetPasswordForEmail(ctx context.Context, email string) ([]byte, error)
 }
 
 type OTPRepo interface {

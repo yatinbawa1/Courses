@@ -2,9 +2,11 @@ package middleware
 
 import (
 	"courses/internal/auth"
-	"log"
+	"errors"
 	"net/http"
 	"strings"
+
+	"github.com/golang-jwt/jwt/v5"
 )
 
 func CheckAuth(next http.Handler) http.Handler {
@@ -15,9 +17,15 @@ func CheckAuth(next http.Handler) http.Handler {
 			w.Write([]byte("Malformed Token"))
 			return
 		} else {
-			ctx, err := auth.VerifyToken(r.Context(), authHeader[1])
-			log.Printf("Working till here")
+			ctx, err := auth.VerifyAccessToken(r.Context(), authHeader[1])
+
 			if err != nil {
+				if errors.Is(err, jwt.ErrTokenExpired) {
+					w.WriteHeader(http.StatusRequestTimeout)
+					w.Write([]byte("Auth Token Expired"))
+					return
+				}
+
 				w.WriteHeader(http.StatusUnauthorized)
 				w.Write([]byte("Unauthorized Access"))
 				return
