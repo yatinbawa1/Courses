@@ -50,14 +50,13 @@ func (l *Login) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	rw.WriteHeader(http.StatusOK)
 	Refreshcookie := &http.Cookie{
 		Name:     "user_refresh_tokens",
 		Value:    token[0],
 		Path:     "/",
 		Expires:  time.Now().Add(time.Hour * 24 * 30),
 		HttpOnly: true,
-		Secure:   true,
+		Secure:   false, // set true on https(When Not On Local)
 		SameSite: http.SameSiteLaxMode,
 	}
 
@@ -67,13 +66,14 @@ func (l *Login) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		Path:     "/",
 		Expires:  time.Now().Add(time.Hour),
 		HttpOnly: true,
-		Secure:   true,
+		Secure:   false,
 		SameSite: http.SameSiteLaxMode,
 	}
 
 	http.SetCookie(rw, Refreshcookie)
 	http.SetCookie(rw, Accesscookie)
 
+	rw.WriteHeader(http.StatusOK)
 	rw.Write([]byte("Success"))
 }
 
