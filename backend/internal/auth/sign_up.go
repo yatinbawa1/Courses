@@ -49,17 +49,17 @@ func (a *AuthService) LoginWithEmailPassword(ctx context.Context, email string, 
 	return [2]string{refreshToken, accessToken}, nil
 }
 
-func (a *AuthService) SignUpUsingEmailAndPassword(ctx context.Context, email string, password string) (string, error) {
+func (a *AuthService) SignUpUsingEmailAndPassword(ctx context.Context, email string, password string) error {
 
 	email = strings.ToLower(email)
 
 	if len(password) < 8 || !hasLower.MatchString(password) || !hasUpper.MatchString(password) || !hasNum.MatchString(password) {
-		return "", ErrUnsecurePassword
+		return ErrUnsecurePassword
 	}
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), 11)
 	if err != nil {
-		return "", ErrUnsecurePassword
+		return ErrUnsecurePassword
 	}
 
 	userId := uuid.New()
@@ -75,13 +75,8 @@ func (a *AuthService) SignUpUsingEmailAndPassword(ctx context.Context, email str
 
 	err = a.UserRepo.Add(ctx, user)
 	if err != nil {
-		return "", err
+		return err
 	}
 
-	token, err := CreateRefreshToken(email)
-	if err != nil {
-		return "", err
-	}
-
-	return token, nil
+	return nil
 }

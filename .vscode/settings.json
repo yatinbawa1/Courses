@@ -1,8 +1,14 @@
 {
-    "cSpell.words": [
-        "dbname",
-        "godotenv",
-        "psql",
-        "sslmode"
-    ]
+  "cSpell.words": [
+    "Accesscookie",
+    "dbname",
+    "dbpool",
+    "godotenv",
+    "jackc",
+    "pgconn",
+    "pgxpool",
+    "psql",
+    "Refreshcookie",
+    "sslmode"
+]
 }

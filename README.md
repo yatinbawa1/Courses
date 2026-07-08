@@ -10,11 +10,21 @@ A full-stack e-learning platform where users can **buy** and **sell** courses. I
 ## Project Structure
 
 ```
-├── backend/          # Go API server
-│   ├── cmd/          # Entry point & migrations
-│   └── internal/     # Auth, database, handlers, models
-└── frontend/         # Next.js application
-    └── app/          # App router pages
+├── backend/                    # Go API server (net/http, pgx, Redis, JWT)
+│   ├── cmd/main.go             # Entry point — wires dependencies & starts server
+│   ├── internal/
+│   │   ├── auth/               # Business logic: sign-up, JWT tokens, password hashing
+│   │   ├── config/             # ENV loading & global config (DB, JWT, AWS, Redis, Email)
+│   │   ├── database/           # PostgreSQL pool, Redis client, AWS S3 client
+│   │   │   └── migrations/     # SQL migration files (init up/down)
+│   │   ├── handlers/           # HTTP handlers & route registration (ServeMux)
+│   │   ├── mailer/             # Resend email client + OTP HTML template
+│   │   ├── models/             # Shared data structs (User, etc.)
+│   │   └── repository/         # Data access: PostgreSQL (users), Redis (OTP)
+│   ├── .air.toml               # Hot-reload config (Air)
+│   └── Makefile                # run, migrate-up/down, delete-all-users
+├── frontend/                   # Next.js application
+│   └── app/                    # App router pages
 ```
 
 ## Getting Started

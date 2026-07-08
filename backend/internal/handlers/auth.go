@@ -51,8 +51,30 @@ func (l *Login) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	rw.WriteHeader(http.StatusOK)
-	output := fmt.Sprintf("{\"RefreshToken\": \"%s\", \"AccessToken\": \"%s\"}", token[0], token[1])
-	rw.Write([]byte(output))
+	Refreshcookie := &http.Cookie{
+		Name:     "user_refresh_tokens",
+		Value:    token[0],
+		Path:     "/",
+		Expires:  time.Now().Add(time.Hour * 24 * 30),
+		HttpOnly: true,
+		Secure:   true,
+		SameSite: http.SameSiteLaxMode,
+	}
+
+	Accesscookie := &http.Cookie{
+		Name:     "user_access_tokens",
+		Value:    token[0],
+		Path:     "/",
+		Expires:  time.Now().Add(time.Hour),
+		HttpOnly: true,
+		Secure:   true,
+		SameSite: http.SameSiteLaxMode,
+	}
+
+	http.SetCookie(rw, Refreshcookie)
+	http.SetCookie(rw, Accesscookie)
+
+	rw.Write([]byte("Success"))
 }
 
 // --------------------
@@ -178,7 +200,7 @@ func (v *VerifyOTP) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	ctx2, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 	defer cancel()
 
-	token, err := v.authService.SignUpUsingEmailAndPassword(ctx2, user.Email, user.Password)
+	err = v.authService.SignUpUsingEmailAndPassword(ctx2, user.Email, user.Password)
 	if err != nil {
 		rw.WriteHeader(http.StatusBadRequest)
 		rw.Write([]byte(err.Error()))
@@ -186,5 +208,5 @@ func (v *VerifyOTP) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	rw.WriteHeader(http.StatusCreated)
-	rw.Write([]byte(token))
+	rw.Write([]byte("Successfully Created Account"))
 }
