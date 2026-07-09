@@ -18,6 +18,14 @@ export default defineConfig({
 				fallback: 'index.html', // Crucial for Go routing to work
 				strict: true
 			})
-		})
-	]
+		}), 
+	],
+	server: {
+		proxy: {
+			'/api': {
+				target: 'http://localhost:8080',
+				changeOrigin: true,
+			}
+		}
+	}
 });

@@ -52,7 +52,8 @@ func main() {
 	resendMailer := mailer.NewResendMailer()
 	otpRepo := repository.NewRedisOTPRepo(redisClient)
 	userRepo := repository.NewUserRepo(pool)
-	authService := auth.NewAuthService(userRepo, otpRepo)
+	refreshRepo := repository.NewRedisRefreshTokenRepo(redisClient)
+	authService := auth.NewAuthService(userRepo, otpRepo, refreshRepo)
 
 	// Set up a router
 	mux := handlers.RegisterRoutes(fileServer, logger, authService, resendMailer)

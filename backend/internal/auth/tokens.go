@@ -15,10 +15,10 @@ var (
 	ErrExpiredToken = errors.New("Expired Token")
 )
 
-func CreateRefreshToken(email string) (string, error) {
+func CreateRefreshToken(ctx context.Context, email string, authService *AuthService) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"email": email,
-		"exp":   time.Now().Add(time.Hour * 24 * 15).Unix(),
+		"exp":   time.Now().Add(time.Hour * 24 * 30).Unix(),
 		"type":  "Refresh",
 	})
 
@@ -27,10 +27,15 @@ func CreateRefreshToken(email string) (string, error) {
 		return "", err
 	}
 
+	err = authService.RefreshRepo.SaveRefreshToken(ctx, tokenString, email)
+	if err != nil {
+		return "", err
+	}
+
 	return tokenString, nil
 }
 
-func CreateAccessToken(refreshToken string) (string, error) {
+func CreateAccessToken(ctx context.Context, refreshToken string, authService *AuthService) (string, error) {
 	token, err := jwt.Parse(refreshToken, func(t *jwt.Token) (any, error) {
 		return []byte(config.JWTSecret), nil
 	})
@@ -40,22 +45,54 @@ func CreateAccessToken(refreshToken string) (string, error) {
 	}
 
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-		accessToken, err := jwt.NewWithClaims(
-			jwt.SigningMethodHS256,
-			jwt.MapClaims{
-				"email": claims["email"].(string),
-				"exp":   time.Now().Add(time.Hour).Unix(),
-				"type":  "Access",
-			}).SignedString([]byte(config.JWTSecret))
+
+		exist, err := authService.RefreshRepo.VerifyIfRefreshTokenIsLive(ctx, refreshToken, claims["email"].(string))
 
 		if err != nil {
-			return "", errors.New("Unable to Sign Token!")
+			return "", ErrExpiredToken
 		}
 
-		return accessToken, nil
-	} else {
-		return "", ErrExpiredToken
+		if exist {
+			accessToken, err := jwt.NewWithClaims(
+				jwt.SigningMethodHS256,
+				jwt.MapClaims{
+					"email": claims["email"].(string),
+					"exp":   time.Now().Add(time.Hour).Unix(),
+					"type":  "Access",
+				}).SignedString([]byte(config.JWTSecret))
+
+			if err != nil {
+				return "", errors.New("Unable to Sign Token!")
+			}
+
+			return accessToken, nil
+		}
 	}
+
+	return "", ErrExpiredToken
+}
+
+func VerifyRefreshToken(cntx context.Context, tokenString string, authService *AuthService) (bool, error) {
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (any, error) {
+		return []byte(config.JWTSecret), nil
+	})
+
+	if err != nil {
+		return false, err
+	}
+
+	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+		if claims["type"].(string) == "Refresh" {
+			exist, err := authService.RefreshRepo.VerifyIfRefreshTokenIsLive(cntx, tokenString, claims["email"].(string))
+			if err != nil {
+				return false, err
+			}
+
+			return exist, nil
+		}
+	}
+
+	return false, fmt.Errorf("Unauthorized")
 }
 
 func VerifyAccessToken(cntx context.Context, tokenString string) (context.Context, error) {

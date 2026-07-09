@@ -8,16 +8,17 @@ import (
 )
 
 var (
-	DBHost        string
-	DBPort        string
-	DBUser        string
-	DBName        string
-	DBPassword    string
-	JWTSecret     string
-	AWSRegion     string
-	Port          string
-	EMAIL_API_KEY string
-	REDIS_ADDR    string
+	DBHost         string
+	DBPort         string
+	DBUser         string
+	DBName         string
+	DBPassword     string
+	JWTSecret      string
+	AWSRegion      string
+	Port           string
+	EMAIL_API_KEY  string
+	REDIS_ADDR     string
+	SECURE_COOKIES bool
 )
 
 func Init(l *log.Logger) {
@@ -37,4 +38,5 @@ func Init(l *log.Logger) {
 	Port = os.Getenv("PORT")
 	EMAIL_API_KEY = os.Getenv("EMAIL_API")
 	REDIS_ADDR = os.Getenv("REDIS_ADDR")
+	SECURE_COOKIES = false
 }

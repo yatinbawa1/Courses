@@ -1,6 +1,8 @@
 {
   "cSpell.words": [
     "Accesscookie",
+    "authhandler",
+    "cntx",
     "dbname",
     "dbpool",
     "godotenv",
@@ -8,6 +10,7 @@
     "pgconn",
     "pgxpool",
     "psql",
+    "rdbs",
     "Refreshcookie",
     "sslmode",
     "Svelt"

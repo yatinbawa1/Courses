@@ -67,6 +67,8 @@ func (r *UserRepo) GetPasswordForEmail(ctx context.Context, email string) ([]byt
 }
 
 func (r *UserRepo) Add(ctx context.Context, user *models.User) error {
+	user.Email = strings.ToLower(user.Email)
+
 	query := `INSERT INTO "User" (user_id,hashed_password, email) values ($1,$2,$3)`
 
 	_, err := r.db.Exec(ctx, query, user.User_id, user.HashedPassword, user.Email)

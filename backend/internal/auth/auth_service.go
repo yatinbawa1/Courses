@@ -7,8 +7,9 @@ import (
 )
 
 type AuthService struct {
-	UserRepo UserDataRepo
-	OtpRepo  OTPRepo
+	UserRepo    UserDataRepo
+	OtpRepo     OTPRepo
+	RefreshRepo RefreshTokenRepo
 }
 
 type UserDataRepo interface {
@@ -22,6 +23,11 @@ type OTPRepo interface {
 	VerifyOTP(ctx context.Context, email string, code string) (bool, error)
 }
 
-func NewAuthService(userRepo UserDataRepo, otpRepo OTPRepo) *AuthService {
-	return &AuthService{userRepo, otpRepo}
+type RefreshTokenRepo interface {
+	SaveRefreshToken(ctx context.Context, tokenString string, email string) error
+	VerifyIfRefreshTokenIsLive(ctx context.Context, tokenString string, email string) (bool, error)
+}
+
+func NewAuthService(userRepo UserDataRepo, otpRepo OTPRepo, refreshTokenRepo RefreshTokenRepo) *AuthService {
+	return &AuthService{userRepo, otpRepo, refreshTokenRepo}
 }
