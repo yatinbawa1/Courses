@@ -11,7 +11,9 @@ import (
 	"log"
 	"math/big"
 	"net/http"
+	"net/mail"
 	"time"
+	"unicode"
 )
 
 func generateOTP() string {
@@ -36,7 +38,34 @@ type SendOTP struct {
 func NewSendOTPHandler(l *log.Logger, authService *auth.AuthService, mailer mailer.MailSender) *SendOTP {
 	return &SendOTP{l, authService, mailer}
 }
+func VerifyIfEmailPasswordAreOK(email string, password string) bool {
+	_, err := mail.ParseAddress(email)
+	if err != nil {
+		return false
+	}
 
+	if len(password) <= 8 {
+		return false
+	}
+
+	var hasUpper, hasLower, hasSymbol bool
+	for _, char := range password {
+		switch {
+		case unicode.IsUpper(char):
+			hasUpper = true
+		case unicode.IsLower(char):
+			hasLower = true
+		case unicode.IsPunct(char) || unicode.IsSymbol(char):
+			hasSymbol = true
+		}
+
+		if hasUpper && hasLower && hasSymbol {
+			return true
+		}
+	}
+
+	return hasUpper && hasLower && hasSymbol
+}
 func (s *SendOTP) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
@@ -48,6 +77,11 @@ func (s *SendOTP) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if !VerifyIfEmailPasswordAreOK(user.Email, user.HashedPassword) {
+		rw.WriteHeader(http.StatusBadRequest)
+		rw.Write([]byte("Email OR Password Not In Format"))
+		return
+	}
 	exist, err := s.authService.UserRepo.CheckIfEmailExists(r.Context(), user.Email)
 	if err != nil {
 		rw.WriteHeader(http.StatusInternalServerError)
