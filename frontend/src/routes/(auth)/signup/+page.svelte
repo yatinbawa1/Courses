@@ -4,7 +4,7 @@
 	import InputGroup from '$lib/components/ui/input-group/input-group.svelte';
 	import InputGroupAddon from '$lib/components/ui/input-group/input-group-addon.svelte';
 	import InputGroupInput from '$lib/components/ui/input-group/input-group-input.svelte';
-	import { LogIn, Mail, KeyIcon } from '@lucide/svelte';
+	import { LogIn, Mail, KeyIcon, User } from '@lucide/svelte';
 	import { toast } from 'svelte-sonner';
 
 	let email = $state('');
@@ -52,18 +52,36 @@
 				credentials: 'include',
 				body: JSON.stringify({ email, password })
 			});
-
-			if (response.status !== 200) {
-				toast.error('Unable to Create Account');
-			} else {
-				goto('/verify-otp');
+			let status = response.status;
+			switch (status) {
+				case 200:
+					goto('/verify-otp', {
+						state: {
+							email: email,
+							password: password
+						}
+					});
+					break;
+				case 409:
+					toast.error('Email already exists in database');
+					break;
+				default:
+					toast.error('Unable to fulfil request at the moment');
 			}
 		} catch (err) {
-			console.error(err);
 			toast.error('An unexpected error occurred');
 		}
 	};
 </script>
+
+<div>
+	<div class="flex items-center">
+		<User class="mr-2" />
+		<p class="text-lg">Sign Up</p>
+	</div>
+
+	<p class="text-mauve-600 mb-4">Create an Account</p>
+</div>
 
 <form onsubmit={handleSignup} class="space-y-4">
 	<div>
@@ -118,7 +136,7 @@
 		type="submit"
 		variant="black"
 		size="lg"
-		disabled={isFormInvalid && (touched.email || touched.password || touched.confirmPassword)}
+		disabled={isFormInvalid}
 		class="py-5 w-full hover:bg-mauve-700 hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
 	>
 		SEND OTP <LogIn size="1rem" />

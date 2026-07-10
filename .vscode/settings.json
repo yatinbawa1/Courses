@@ -1,7 +1,25 @@
 {
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "[svelte]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[css]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[json]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
   "cSpell.words": [
     "Accesscookie",
     "authhandler",
+    "Bawa",
     "cntx",
     "dbname",
     "dbpool",
@@ -13,6 +31,7 @@
     "rdbs",
     "Refreshcookie",
     "sslmode",
-    "Svelt"
+    "Svelt",
+    "Yatin"
   ]
 }

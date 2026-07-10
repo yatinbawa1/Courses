@@ -4,9 +4,10 @@
 	import Card from '$lib/components/ui/card/card.svelte';
 	import CardTitle from '$lib/components/ui/card/card-title.svelte';
 	import CardFooter from '$lib/components/ui/card/card-footer.svelte';
+	import { Image } from '@lucide/svelte';
 </script>
 
-<div class="background flex min-h-screen items-center justify-center">
+<div class="background flex flex-col min-h-screen items-center justify-center">
 	<Card class="w-full max-w-lg p-5 m-4 z-10">
 		<CardTitle>
 			<div class="text-center">
@@ -16,7 +17,6 @@
 		<CardContent>
 			{@render children()}
 		</CardContent>
-
 		<CardFooter
 			>Courses Project: <a
 				class="hover:underline underline-offset-4 text-accent"
@@ -24,6 +24,14 @@
 			></CardFooter
 		>
 	</Card>
+	<div
+		class="absolute bottom-4 left-4 backdrop-blur text-accent bg-white p-2 text-xs z-10 photo-author"
+	>
+		<a class="flex gap-1 underline" href="https://unsplash.com/@samuelwu">
+			<Image class="inline" size="16px" />
+			Photo By: Yue WU
+		</a>
+	</div>
 </div>
 
 <style>
