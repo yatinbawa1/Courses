@@ -23,6 +23,7 @@
     "cntx",
     "dbname",
     "dbpool",
+    "favourite",
     "godotenv",
     "jackc",
     "pgconn",
@@ -32,6 +33,7 @@
     "Refreshcookie",
     "sslmode",
     "Svelt",
+    "Topbar",
     "Yatin"
   ]
 }

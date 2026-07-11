@@ -37,7 +37,7 @@
 			if (response.status !== 200) {
 				toast.error('Unable to login');
 			} else {
-				goto('/');
+				goto('/app');
 			}
 		} catch (err) {
 			toast.error('An error occurred during login');
