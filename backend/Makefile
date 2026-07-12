@@ -1,3 +1,5 @@
+-include .env
+
 # Variables
 DB_USER=postgres
 DB_PASSWORD=COURSES
@@ -6,8 +8,8 @@ DB_PORT=5432
 DB_NAME=stage
 
 # Construct the migration database connection URL
-DB_URL=postgres://$(DB_USER):$(DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)?sslmode=disable
-MIGRATIONS_PATH=cmd/migrations
+# DATABASE_URL=postgres://$(DB_USER):$(DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)?sslmode=disable
+MIGRATIONS_PATH=internal/database/migrations
 
 .PHONY: run migrate-up migrate-down migrate-force delete-all-users
 
@@ -17,15 +19,17 @@ run:
 
 # Run all up migrations
 migrate-up:
-	migrate -path $(MIGRATIONS_PATH) -database "$(DB_URL)" up
+	migrate -path $(MIGRATIONS_PATH) -database $(DATABASE_URL) up
 
 # Rollback the last migration
 migrate-down:
-	migrate -path $(MIGRATIONS_PATH) -database "$(DB_URL)" down 1
+	migrate -path $(MIGRATIONS_PATH) -database $(DATABASE_URL) down 1
 
 # Force clear a dirty migration state (usage: make migrate-force v=1)
 migrate-force:
-	migrate -path $(MIGRATIONS_PATH) -database "$(DB_URL)" force $(v)
+	migrate -path $(MIGRATIONS_PATH) -database $(DATABASE_URL) force $(v)
 
 delete-all-users:
-	docker exec -i courses-psql psql "$(DB_URL)" < internal/database/migrations/delete_all_user.sql
+	docker exec -i courses-psql psql $(DATABASE_URL) < internal/database/migrations/000001_delete_all_user.sql
+
+export

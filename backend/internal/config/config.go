@@ -18,6 +18,8 @@ var (
 	Port           string
 	EMAIL_API_KEY  string
 	REDIS_ADDR     string
+	REDIS_URL	   string
+	DATABASE_URL   string
 	SECURE_COOKIES bool
 )
 
@@ -27,16 +29,18 @@ func Init(l *log.Logger) {
 	if err != nil {
 		l.Printf("Unable to locate ENV File")
 	}
-
+	
 	DBHost = os.Getenv("DB_HOST")
 	DBPort = os.Getenv("DB_PORT")
 	DBUser = os.Getenv("DB_USER")
 	DBName = os.Getenv("DB_NAME")
 	DBPassword = os.Getenv("DB_PASSWORD")
 	JWTSecret = os.Getenv("JWT_SECRET")
-	AWSRegion = os.Getenv("AWS_REGION")
+	AWSRegion = os.Getenv("AWS_REGION_M")
 	Port = os.Getenv("PORT")
 	EMAIL_API_KEY = os.Getenv("EMAIL_API")
 	REDIS_ADDR = os.Getenv("REDIS_ADDR")
 	SECURE_COOKIES = false
+	REDIS_URL = os.Getenv("REDIS_URL")
+	DATABASE_URL = os.Getenv("DATABASE_URL")
 }

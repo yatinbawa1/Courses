@@ -27,13 +27,16 @@ func main() {
 	// Initialize ENV
 	// And Database and Redis
 	config.Init(logger)
-	pool, err := database.ConnectDataBase()
+	pool, err := database.ConnectOnlineDatabase()
 	if err != nil {
 		logger.Fatalf("Unable to connect with Database %s", err)
 	}
 	defer pool.Close()
 
-	redisClient, err := database.NewRedisClient(config.REDIS_ADDR, "", 0)
+	// This is for local redis client
+	// redisClient, err := database.NewRedisClient(config.REDIS_ADDR, "", 0)
+
+	redisClient, err := database.NewRedisOnlineClient()
 	if err != nil {
 		logger.Fatalf("Unable to Connect With Redis %s", err)
 	}
@@ -60,7 +63,7 @@ func main() {
 
 	server := &http.Server{
 		Handler:      mux,
-		Addr:         config.Port,
+		Addr:          ":" + config.Port,
 		IdleTimeout:  120 * time.Second,
 		ReadTimeout:  1 * time.Second,
 		WriteTimeout: 1 * time.Second,

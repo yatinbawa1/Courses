@@ -32,3 +32,22 @@ func ConnectDataBase() (*pgxpool.Pool, error) {
 
 	return dbpool, nil
 }
+
+func ConnectOnlineDatabase() (*pgxpool.Pool, error) {
+	if len(config.DATABASE_URL) == 0 {
+		return nil, fmt.Errorf("Unable to find DATABASE_URL in env")
+	}
+
+	ctx := context.Background()
+	dbpool, err := pgxpool.New(ctx, config.DATABASE_URL)
+	if err != nil {
+		return nil, fmt.Errorf("Unable to create connection pool: %v\n", err)
+	}
+
+	err = dbpool.Ping(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("Could not ping database: %v", err)
+	}
+
+	return dbpool, nil
+}
