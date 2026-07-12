@@ -1,4 +1,4 @@
--include .env
+# -include .env
 
 # Variables
 DB_USER=postgres
@@ -8,7 +8,7 @@ DB_PORT=5432
 DB_NAME=stage
 
 # Construct the migration database connection URL
-# DATABASE_URL=postgres://$(DB_USER):$(DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)?sslmode=disable
+DATABASE_URL="postgres://$(DB_USER):$(DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)?sslmode=disable"
 MIGRATIONS_PATH=internal/database/migrations
 
 .PHONY: run migrate-up migrate-down migrate-force delete-all-users

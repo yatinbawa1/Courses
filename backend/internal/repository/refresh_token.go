@@ -40,3 +40,11 @@ func (r *RefreshTokenRepo) VerifyIfRefreshTokenIsLive(ctx context.Context, token
 
 	return (token == tokenString), nil
 }
+
+
+func (r *RefreshTokenRepo) DeleteRefreshToken(ctx context.Context, email string) (error) {
+	key := fmt.Sprintf("refresh_token:%s", email)
+	_ , err :=  r.rdbs.Del(ctx, key).Result()
+
+	return err
+}

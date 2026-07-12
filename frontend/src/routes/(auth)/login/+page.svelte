@@ -16,14 +16,12 @@
 	});
 
 	const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-	const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*(),.?":{}|<>_\-\[\]]).{9,}$/;
 
 	const errors = $derived({
-		email: email.length > 0 && !emailRegex.test(email) ? 'Email is not correct' : '',
-		password: password.length > 0 && !passwordRegex.test(password) ? 'Password Unsecure' : ''
+		email: email.length > 0 && !emailRegex.test(email) ? 'Email is not correct' : ''
 	});
 
-	const isFormInvalid = $derived(!emailRegex.test(email) || !passwordRegex.test(password));
+	const isFormInvalid = $derived(!emailRegex.test(email));
 
 	const handleLogin = async () => {
 		try {
@@ -84,10 +82,6 @@
 			onblur={() => (touches.password = true)}
 		></InputGroupInput>
 	</InputGroup>
-	{#if errors.password && touches.password}
-		<p class="text-xs text-red-500 mt-1">{errors.password}</p>
-	{/if}
-
 	<Button
 		type="submit"
 		variant="black"

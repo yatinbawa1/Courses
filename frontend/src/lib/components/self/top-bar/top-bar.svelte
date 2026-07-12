@@ -1,5 +1,7 @@
 <script lang="ts">
+	import { invalidateAll } from '$app/navigation';
 	import { page } from '$app/state';
+	import { api } from '$lib/api/api';
 	import AvatarBadge from '$lib/components/ui/avatar/avatar-badge.svelte';
 	import AvatarFallback from '$lib/components/ui/avatar/avatar-fallback.svelte';
 	import AvatarImage from '$lib/components/ui/avatar/avatar-image.svelte';
@@ -17,6 +19,7 @@
 	import NavigationMenuItem from '$lib/components/ui/navigation-menu/navigation-menu-item.svelte';
 	import NavigationMenuList from '$lib/components/ui/navigation-menu/navigation-menu-list.svelte';
 	import NavigationMenu from '$lib/components/ui/navigation-menu/navigation-menu.svelte';
+	import { auth, logoutUser } from '$lib/stores/authStore/authStore';
 	import {
 		Search,
 		House,
@@ -24,9 +27,11 @@
 		ShoppingBasket,
 		Pen,
 		Wallet,
-		LogOut
+		LogOut,
+		User
 	} from '@lucide/svelte';
 	import type { Component } from 'svelte';
+	import { toast } from 'svelte-sonner';
 
 	interface MenuItem {
 		icon: Component;
@@ -66,6 +71,16 @@
 		'https://images.unsplash.com/photo-1773332611476-6ec2ba68049f?q=80&w=1830&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDF8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D';
 
 	let activeLink = $derived(page.url.pathname);
+
+	const logout = async () => {
+		const res = await api.post(`/api/auth/logout/${$auth.email}`);
+		if (res.status == 200) {
+			logoutUser();
+			invalidateAll();
+		} else {
+			toast.error('Unable to logout!');
+		}
+	};
 </script>
 
 <div class="w-full bg-gray-900 grid grid-cols-3 items-center px-5 py-4">
@@ -107,10 +122,10 @@
 			</DropdownMenuTrigger>
 			<DropdownMenuContent class="bg-gray-800">
 				<DropdownMenuGroup>
-					<DropdownMenuLabel>
-						<Profile /> Profile</DropdownMenuLabel
+					<DropdownMenuLabel class="flex items-center">
+						<User size="1rem" /> Profile</DropdownMenuLabel
 					>
-					<DropdownMenuItem class="text-gray-500">
+					<DropdownMenuItem onclick={logout} class="text-gray-500">
 						<LogOut />
 						<span>Log Out</span>
 					</DropdownMenuItem>

@@ -10,7 +10,7 @@ import (
 
 func CheckAuth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		accessToken, err := r.Cookie("user_access_token")
+		accessToken, err := r.Cookie("user_access_tokens")
 		if err != nil {
 			w.WriteHeader(http.StatusUnauthorized)
 			w.Write([]byte("Malformed Token"))

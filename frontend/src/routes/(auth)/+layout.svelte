@@ -24,14 +24,6 @@
 			></CardFooter
 		>
 	</Card>
-	<div
-		class="absolute bottom-4 left-4 backdrop-blur text-accent bg-white p-2 text-xs z-10 photo-author"
-	>
-		<a class="flex gap-1 underline" href="https://unsplash.com/@samuelwu">
-			<Image class="inline" size="16px" />
-			Photo By: Yue WU
-		</a>
-	</div>
 </div>
 
 <style>

@@ -27,16 +27,15 @@ func main() {
 	// Initialize ENV
 	// And Database and Redis
 	config.Init(logger)
-	pool, err := database.ConnectOnlineDatabase()
+	pool, err := database.ConnectDataBase()
 	if err != nil {
 		logger.Fatalf("Unable to connect with Database %s", err)
 	}
 	defer pool.Close()
 
 	// This is for local redis client
-	// redisClient, err := database.NewRedisClient(config.REDIS_ADDR, "", 0)
-
-	redisClient, err := database.NewRedisOnlineClient()
+	redisClient, err := database.NewRedisClient(config.REDIS_ADDR, "", 0)
+	// redisClient, err := database.NewRedisOnlineClient()
 	if err != nil {
 		logger.Fatalf("Unable to Connect With Redis %s", err)
 	}
@@ -74,8 +73,8 @@ func main() {
 	go func() {
 		err := server.ListenAndServe()
 		if err != nil {
-			logger.Fatalf("Error Starting the Server")
-		}
+			logger.Fatalf("Error Starting the Server: %s", err)
+		} 
 	}()
 
 	SigChan := make(chan os.Signal, 1)

@@ -8,7 +8,6 @@ import (
 
 	"regexp"
 
-	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -38,15 +37,9 @@ func (a *AuthService) SignUpUsingEmailAndPassword(ctx context.Context, email str
 		return ErrUnsecurePassword
 	}
 
-	userId := uuid.New()
-
-	var user = &models.User{
-		HashedPassword:  string(hashedPassword),
-		User_id:         userId,
-		Email:           email,
-		ProfilePhotoURL: "",
-		Username:        "",
-		Revenue:         0,
+	var user = &models.UserAuthCreds{
+		Email:    email,
+		Password: string(hashedPassword),
 	}
 
 	err = a.UserRepo.Add(ctx, user)

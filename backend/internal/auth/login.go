@@ -22,7 +22,7 @@ func (a *AuthService) LoginWithEmailPassword(ctx context.Context, email string, 
 		return [2]string{}, err
 	}
 
-	accessToken, err := CreateAccessToken(ctx, refreshToken, a)
+	accessToken, err, _ := CreateAccessToken(ctx, refreshToken, a)
 	if err != nil {
 		return [2]string{}, err
 	}

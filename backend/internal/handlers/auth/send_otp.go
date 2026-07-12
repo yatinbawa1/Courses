@@ -69,7 +69,7 @@ func VerifyIfEmailPasswordAreOK(email string, password string) bool {
 func (s *SendOTP) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
-	var user models.User
+	var user models.UserAuthCreds
 	err := json.NewDecoder(r.Body).Decode(&user)
 	if err != nil {
 		rw.WriteHeader(http.StatusBadRequest)
@@ -77,7 +77,7 @@ func (s *SendOTP) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !VerifyIfEmailPasswordAreOK(user.Email, user.HashedPassword) {
+	if !VerifyIfEmailPasswordAreOK(user.Email, user.Password) {
 		rw.WriteHeader(http.StatusBadRequest)
 		rw.Write([]byte("Email OR Password Not In Format"))
 		return

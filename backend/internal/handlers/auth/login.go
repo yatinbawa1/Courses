@@ -24,9 +24,9 @@ func NewLoginHandler(l *log.Logger, authService *auth.AuthService) *Login {
 func (l *Login) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
-	var user models.User
+	var user models.UserAuthCreds
 	json.NewDecoder(r.Body).Decode(&user)
-	token, err := l.authService.LoginWithEmailPassword(r.Context(), user.Email, user.HashedPassword)
+	token, err := l.authService.LoginWithEmailPassword(r.Context(), user.Email, user.Password)
 
 	if err != nil {
 		if errors.Is(err, auth.ErrUserDoesNotExist) {
@@ -67,7 +67,16 @@ func (l *Login) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 
 	http.SetCookie(rw, Refreshcookie)
 	http.SetCookie(rw, Accesscookie)
+	
+	userData, err := l.authService.UserRepo.GetUserData(r.Context(), user.Email)
+	if err != nil {
+		rw.WriteHeader(http.StatusInternalServerError)
+		v := fmt.Sprintf("Unable to find user in database %s", err)
+		rw.Write([]byte(v))
+		return
+	}
 
+	rw.Header().Set("Content-Type","application/json")
 	rw.WriteHeader(http.StatusOK)
-	rw.Write([]byte("Success"))
+	_ = json.NewEncoder(rw).Encode(userData)
 }

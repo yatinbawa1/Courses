@@ -35,21 +35,19 @@ func CreateRefreshToken(ctx context.Context, email string, authService *AuthServ
 	return tokenString, nil
 }
 
-func CreateAccessToken(ctx context.Context, refreshToken string, authService *AuthService) (string, error) {
+func CreateAccessToken(ctx context.Context, refreshToken string, authService *AuthService,) (accessToken string,anyError error, email string) {
 	token, err := jwt.Parse(refreshToken, func(t *jwt.Token) (any, error) {
 		return []byte(config.JWTSecret), nil
 	})
 
 	if err != nil {
-		return "", err
+		return "", err, ""
 	}
 
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-
 		exist, err := authService.RefreshRepo.VerifyIfRefreshTokenIsLive(ctx, refreshToken, claims["email"].(string))
-
 		if err != nil {
-			return "", ErrExpiredToken
+			return "", ErrExpiredToken, ""
 		}
 
 		if exist {
@@ -62,14 +60,14 @@ func CreateAccessToken(ctx context.Context, refreshToken string, authService *Au
 				}).SignedString([]byte(config.JWTSecret))
 
 			if err != nil {
-				return "", errors.New("Unable to Sign Token!")
+				return "", errors.New("Unable to Sign Token!"), ""
 			}
 
-			return accessToken, nil
+			return accessToken, nil, claims["email"].(string)
 		}
 	}
 
-	return "", ErrExpiredToken
+	return "", ErrExpiredToken, ""
 }
 
 func VerifyRefreshToken(cntx context.Context, tokenString string, authService *AuthService) (bool, error) {

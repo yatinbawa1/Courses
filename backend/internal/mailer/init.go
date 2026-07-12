@@ -10,7 +10,7 @@ import (
 )
 
 type MailSender interface {
-	SendOTPMail(ctx context.Context, user *models.User, otp string) error
+	SendOTPMail(ctx context.Context, user *models.UserAuthCreds, otp string) error
 }
 
 type ResendMailer struct {
@@ -24,7 +24,7 @@ func NewResendMailer() *ResendMailer {
 	}
 }
 
-func (m *ResendMailer) SendOTPMail(ctx context.Context, user *models.User, otp string) error {
+func (m *ResendMailer) SendOTPMail(ctx context.Context, user *models.UserAuthCreds, otp string) error {
 
 	hmx, err := GenerateOTPEmail(user.Email, otp)
 	if err != nil {

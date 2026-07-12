@@ -13,9 +13,11 @@ type AuthService struct {
 }
 
 type UserDataRepo interface {
-	Add(ctx context.Context, use *models.User) error
+	Add(ctx context.Context, use *models.UserAuthCreds) error
 	CheckIfEmailExists(ctx context.Context, email string) (bool, error)
 	GetPasswordForEmail(ctx context.Context, email string) ([]byte, error)
+	GetUserData(ctx context.Context, email string) (*models.User, error)
+	SaveUser(ctx context.Context, user *models.User) error
 }
 
 type OTPRepo interface {
@@ -26,6 +28,7 @@ type OTPRepo interface {
 type RefreshTokenRepo interface {
 	SaveRefreshToken(ctx context.Context, tokenString string, email string) error
 	VerifyIfRefreshTokenIsLive(ctx context.Context, tokenString string, email string) (bool, error)
+	DeleteRefreshToken(ctx context.Context, email string) (error)
 }
 
 func NewAuthService(userRepo UserDataRepo, otpRepo OTPRepo, refreshTokenRepo RefreshTokenRepo) *AuthService {

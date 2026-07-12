@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -23,6 +24,71 @@ type UserRepo struct {
 
 func NewUserRepo(db *pgxpool.Pool) *UserRepo {
 	return &UserRepo{db: db}
+}
+
+func (r *UserRepo) SaveUser(ctx context.Context, user *models.User) error {
+	var args []any
+	var setClauses []string
+	argCounter := 1
+
+	if user.Username != nil {
+		setClauses = append(setClauses, fmt.Sprintf("name = $%d", argCounter))
+		args = append(args, *user.Username)
+		argCounter++
+	}
+
+	if user.ProfilePhotoURL != nil {
+		setClauses = append(setClauses, fmt.Sprintf("profile_photo_url = $%d", argCounter))
+		args = append(args, *user.ProfilePhotoURL)
+		argCounter++
+	}
+
+	if len(setClauses) == 0 {
+		return nil 
+	}
+
+	args = append(args, user.User_id)
+	whereClause := fmt.Sprintf("WHERE user_id = $%d", argCounter)
+
+	query := fmt.Sprintf(
+		`UPDATE "User" SET %s %s;`,
+		strings.Join(setClauses, ", "),
+		whereClause,
+	)
+
+
+	result, err := r.db.Exec(ctx, query, args...)
+	if err != nil {
+		return fmt.Errorf("failed to execute dynamic user update: %w", err)
+	}
+
+	// Optional: Check if the UUID actually existed in the database
+	if result.RowsAffected() == 0 {
+		return fmt.Errorf("user with id %s not found", user.User_id)
+	}
+
+	return nil
+}
+
+func (r *UserRepo) GetUserData(ctx context.Context, email string) (*models.User, error) {
+    user := &models.User{}
+    lookupEmail := strings.ToLower(email)
+
+    query := `SELECT user_id, name, profile_photo_url FROM "User" WHERE email = $1;`
+    
+    err := r.db.QueryRow(ctx, query, lookupEmail).Scan(
+        &user.User_id,         
+        &user.Username,        
+        &user.ProfilePhotoURL,
+    )
+
+    if err != nil {
+        return nil, fmt.Errorf("Failed To Find User! Internal Error %w", err)
+    }
+
+    user.Email = lookupEmail
+
+    return user, nil
 }
 
 func (r *UserRepo) CheckIfEmailExists(ctx context.Context, email string) (bool, error) {
@@ -66,12 +132,13 @@ func (r *UserRepo) GetPasswordForEmail(ctx context.Context, email string) ([]byt
 	return []byte(storedHash), nil
 }
 
-func (r *UserRepo) Add(ctx context.Context, user *models.User) error {
+func (r *UserRepo) Add(ctx context.Context, user *models.UserAuthCreds) error {
 	user.Email = strings.ToLower(user.Email)
 
+	userId := uuid.New()
 	query := `INSERT INTO "User" (user_id,hashed_password, email) values ($1,$2,$3)`
 
-	_, err := r.db.Exec(ctx, query, user.User_id, user.HashedPassword, user.Email)
+	_, err := r.db.Exec(ctx, query, userId, user.Password, user.Email)
 
 	if err != nil {
 		var pgErr *pgconn.PgError
