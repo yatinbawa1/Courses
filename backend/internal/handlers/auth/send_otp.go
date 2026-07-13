@@ -44,27 +44,27 @@ func VerifyIfEmailPasswordAreOK(email string, password string) bool {
 		return false
 	}
 
-	if len(password) <= 8 {
+	if len(password) < 8 {
 		return false
 	}
 
-	var hasUpper, hasLower, hasSymbol bool
+	var hasUpper, hasLower, hasDigit bool
 	for _, char := range password {
 		switch {
 		case unicode.IsUpper(char):
 			hasUpper = true
 		case unicode.IsLower(char):
 			hasLower = true
-		case unicode.IsPunct(char) || unicode.IsSymbol(char):
-			hasSymbol = true
+		case unicode.IsDigit(char):
+			hasDigit = true
 		}
 
-		if hasUpper && hasLower && hasSymbol {
+		if hasUpper && hasLower && hasDigit {
 			return true
 		}
 	}
 
-	return hasUpper && hasLower && hasSymbol
+	return hasUpper && hasLower && hasDigit
 }
 func (s *SendOTP) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()

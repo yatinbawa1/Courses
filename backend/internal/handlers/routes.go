@@ -6,12 +6,13 @@ import (
 	authhandler "courses/internal/handlers/auth"
 	"courses/internal/mailer"
 	"courses/internal/middleware"
+	"io"
+	"io/fs"
 	"log"
 	"net/http"
-	"path/filepath"
 )
 
-func RegisterRoutes(fileServer http.Handler, logger *log.Logger, authService *auth.AuthService, mailer mailer.MailSender) *http.ServeMux {
+func RegisterRoutes(fileServer http.Handler, logger *log.Logger, authService *auth.AuthService, mailer mailer.MailSender, frontendFS fs.FS) *http.ServeMux {
 	mux := http.NewServeMux()	
 
 	// Unsecure Links
@@ -26,14 +27,22 @@ func RegisterRoutes(fileServer http.Handler, logger *log.Logger, authService *au
 	mux.Handle("POST /api/account/update-user", middleware.CheckAuth(accounthandler.NewUpdateUserHandler(logger, authService)))
 	
 
-	// Frontend - Unsecure
+	// Frontend - SPA fallback using embedded FS
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-        if filepath.Ext(r.URL.Path) != "" {
-            fileServer.ServeHTTP(w, r)
-            return
-        }
+		f, err := frontendFS.Open("index.html")
+		if err != nil {
+			http.NotFound(w, r)
+			return
+		}
+		defer f.Close()
 
-        http.ServeFile(w, r, "./ui/dist/index.html") 
-    })
+		stat, err := f.Stat()
+		if err != nil {
+			http.NotFound(w, r)
+			return
+		}
+
+		http.ServeContent(w, r, stat.Name(), stat.ModTime(), f.(io.ReadSeeker))
+	})
 	return mux
 }

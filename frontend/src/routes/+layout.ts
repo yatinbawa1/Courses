@@ -1,16 +1,15 @@
-import { browser } from '$app/env';
+import { browser } from '$app/environment';
 import type { LayoutLoad } from './$types';
 import { get } from 'svelte/store';
 import { auth } from '$lib/stores/authStore/authStore';
 import { redirect } from '@sveltejs/kit';
-import { page } from '$app/state';
 
 export const load: LayoutLoad = async ({ fetch, url }) => {
 	if (!browser) return;
 
 	const path = url.pathname;
-	let currentAuth = get(auth);
 
+	let currentAuth = get(auth);
 	if (!currentAuth.isAuthenticated) {
 		try {
 			const res = await fetch('/api/auth/refresh');
@@ -24,7 +23,6 @@ export const load: LayoutLoad = async ({ fetch, url }) => {
 					user_id: userData.user_id
 				});
 
-				// Refresh our local reference variable
 				currentAuth = get(auth);
 			}
 		} catch (err) {
@@ -35,8 +33,9 @@ export const load: LayoutLoad = async ({ fetch, url }) => {
 	const isAuthRoute =
 		path.startsWith('/login') || path.startsWith('/signup') || path.startsWith('/verify-otp');
 	const isOnboardingRoute = path.startsWith('/onboarding');
+
 	if (!currentAuth.isAuthenticated) {
-		if (!isAuthRoute && path !== '/') {
+		if (!isAuthRoute) {
 			throw redirect(303, '/login');
 		}
 		return;
@@ -50,7 +49,11 @@ export const load: LayoutLoad = async ({ fetch, url }) => {
 		throw redirect(303, '/app');
 	}
 
-	if (isAuthRoute || path === '/') {
+	if (currentAuth.isAuthenticated && path === '/') {
+		throw redirect(303, '/app');
+	}
+
+	if (isAuthRoute) {
 		throw redirect(303, '/app');
 	}
 };

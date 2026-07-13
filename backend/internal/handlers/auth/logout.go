@@ -4,6 +4,7 @@ import (
 	"courses/internal/auth"
 	"log"
 	"net/http"
+	"time"
 )
 
 type Logout struct {
@@ -23,6 +24,24 @@ func (l *Logout) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		rw.Write([]byte("Unable to delete refresh token"))
 		return
 	}
+
+	http.SetCookie(rw, &http.Cookie{
+		Name:     "user_refresh_tokens",
+		Value:    "",
+		Path:     "/",
+		MaxAge:   -1,
+		Expires:  time.Unix(0, 0),
+		HttpOnly: true,
+	})
+
+	http.SetCookie(rw, &http.Cookie{
+		Name:     "user_access_tokens",
+		Value:    "",
+		Path:     "/",
+		MaxAge:   -1,
+		Expires:  time.Unix(0, 0),
+		HttpOnly: true,
+	})
 
 	rw.WriteHeader(http.StatusOK)
 	rw.Write([]byte("Successful"))

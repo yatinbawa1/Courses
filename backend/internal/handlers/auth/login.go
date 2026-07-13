@@ -45,6 +45,14 @@ func (l *Login) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	userData, err := l.authService.UserRepo.GetUserData(r.Context(), user.Email)
+	if err != nil {
+		rw.WriteHeader(http.StatusInternalServerError)
+		v := fmt.Sprintf("Unable to find user in database %s", err)
+		rw.Write([]byte(v))
+		return
+	}
+
 	Refreshcookie := &http.Cookie{
 		Name:     "user_refresh_tokens",
 		Value:    token[0],
@@ -67,14 +75,6 @@ func (l *Login) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 
 	http.SetCookie(rw, Refreshcookie)
 	http.SetCookie(rw, Accesscookie)
-	
-	userData, err := l.authService.UserRepo.GetUserData(r.Context(), user.Email)
-	if err != nil {
-		rw.WriteHeader(http.StatusInternalServerError)
-		v := fmt.Sprintf("Unable to find user in database %s", err)
-		rw.Write([]byte(v))
-		return
-	}
 
 	rw.Header().Set("Content-Type","application/json")
 	rw.WriteHeader(http.StatusOK)

@@ -3,6 +3,7 @@ package config
 import (
 	"log"
 	"os"
+	"strings"
 
 	"github.com/joho/godotenv"
 )
@@ -40,7 +41,7 @@ func Init(l *log.Logger) {
 	Port = os.Getenv("PORT")
 	EMAIL_API_KEY = os.Getenv("EMAIL_API")
 	REDIS_ADDR = os.Getenv("REDIS_ADDR")
-	SECURE_COOKIES = false
 	REDIS_URL = os.Getenv("REDIS_URL")
 	DATABASE_URL = os.Getenv("DATABASE_URL")
+	SECURE_COOKIES = strings.ToLower(os.Getenv("SECURE_COOKIES")) == "true"
 }

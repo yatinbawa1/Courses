@@ -15,6 +15,10 @@ var (
 	ErrExpiredToken = errors.New("Expired Token")
 )
 
+type contextKey string
+
+const ClaimsKey contextKey = "claims"
+
 func CreateRefreshToken(ctx context.Context, email string, authService *AuthService) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"email": email,
@@ -35,7 +39,7 @@ func CreateRefreshToken(ctx context.Context, email string, authService *AuthServ
 	return tokenString, nil
 }
 
-func CreateAccessToken(ctx context.Context, refreshToken string, authService *AuthService,) (accessToken string,anyError error, email string) {
+func CreateAccessToken(ctx context.Context, refreshToken string, authService *AuthService) (accessToken string, anyError error, email string) {
 	token, err := jwt.Parse(refreshToken, func(t *jwt.Token) (any, error) {
 		return []byte(config.JWTSecret), nil
 	})
@@ -45,6 +49,10 @@ func CreateAccessToken(ctx context.Context, refreshToken string, authService *Au
 	}
 
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+		if claims["type"].(string) != "Refresh" {
+			return "", fmt.Errorf("Invalid token type"), ""
+		}
+
 		exist, err := authService.RefreshRepo.VerifyIfRefreshTokenIsLive(ctx, refreshToken, claims["email"].(string))
 		if err != nil {
 			return "", ErrExpiredToken, ""
@@ -104,7 +112,7 @@ func VerifyAccessToken(cntx context.Context, tokenString string) (context.Contex
 
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
 		if claims["type"].(string) == "Access" {
-			ctx := context.WithValue(cntx, "claims", claims)
+			ctx := context.WithValue(cntx, ClaimsKey, claims)
 			return ctx, nil
 		}
 	}

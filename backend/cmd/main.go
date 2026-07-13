@@ -58,14 +58,14 @@ func main() {
 	authService := auth.NewAuthService(userRepo, otpRepo, refreshRepo)
 
 	// Set up a router
-	mux := handlers.RegisterRoutes(fileServer, logger, authService, resendMailer)
+	mux := handlers.RegisterRoutes(fileServer, logger, authService, resendMailer, strippedFS)
 
 	server := &http.Server{
 		Handler:      mux,
 		Addr:          ":" + config.Port,
 		IdleTimeout:  120 * time.Second,
-		ReadTimeout:  1 * time.Second,
-		WriteTimeout: 1 * time.Second,
+		ReadTimeout:  5 * time.Second,
+		WriteTimeout: 10 * time.Second,
 	}
 
 	logger.Printf("Server Starting on Port %s\n", config.Port)
