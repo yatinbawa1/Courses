@@ -2,11 +2,9 @@
 	import { invalidateAll } from '$app/navigation';
 	import { page } from '$app/state';
 	import { api } from '$lib/api/api';
-	import AvatarBadge from '$lib/components/ui/avatar/avatar-badge.svelte';
 	import AvatarFallback from '$lib/components/ui/avatar/avatar-fallback.svelte';
 	import AvatarImage from '$lib/components/ui/avatar/avatar-image.svelte';
 	import Avatar from '$lib/components/ui/avatar/avatar.svelte';
-	import Button from '$lib/components/ui/button/button.svelte';
 	import DropdownMenuContent from '$lib/components/ui/dropdown-menu/dropdown-menu-content.svelte';
 	import DropdownMenuGroup from '$lib/components/ui/dropdown-menu/dropdown-menu-group.svelte';
 	import DropdownMenuItem from '$lib/components/ui/dropdown-menu/dropdown-menu-item.svelte';
@@ -16,9 +14,6 @@
 	import InputGroupAddon from '$lib/components/ui/input-group/input-group-addon.svelte';
 	import InputGroupInput from '$lib/components/ui/input-group/input-group-input.svelte';
 	import InputGroup from '$lib/components/ui/input-group/input-group.svelte';
-	import NavigationMenuItem from '$lib/components/ui/navigation-menu/navigation-menu-item.svelte';
-	import NavigationMenuList from '$lib/components/ui/navigation-menu/navigation-menu-list.svelte';
-	import NavigationMenu from '$lib/components/ui/navigation-menu/navigation-menu.svelte';
 	import { auth, logoutUser } from '$lib/stores/authStore/authStore';
 	import {
 		Search,
@@ -32,7 +27,7 @@
 		Menu,
 		X
 	} from '@lucide/svelte';
-	import type { Component } from 'svelte';
+	import { onMount, type Component } from 'svelte';
 	import { toast } from 'svelte-sonner';
 
 	interface MenuItem {
@@ -68,9 +63,16 @@
 			label: 'wallet'
 		}
 	];
-
-	let userProfileLink =
+	const standardImage =
 		'https://images.unsplash.com/photo-1773332611476-6ec2ba68049f?q=80&w=1830&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDF8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D';
+
+	let profileUrl = $derived.by(() => {
+		if (!$auth.profile_photo_exists) {
+			return standardImage;
+		}
+
+		return `https://courses-content-portfolio-go-next.s3.ap-south-1.amazonaws.com/users/${$auth.user_id}`;
+	});
 
 	let activeLink = $derived(page.url.pathname);
 
@@ -121,7 +123,7 @@
 			<DropdownMenu>
 				<DropdownMenuTrigger>
 					<Avatar>
-						<AvatarImage src={userProfileLink} />
+						<AvatarImage src={profileUrl} />
 						<AvatarFallback>CN</AvatarFallback>
 					</Avatar>
 				</DropdownMenuTrigger>
@@ -187,7 +189,7 @@
 			<DropdownMenu>
 				<DropdownMenuTrigger>
 					<Avatar>
-						<AvatarImage src={userProfileLink} />
+						<AvatarImage src={profileUrl} />
 						<AvatarFallback>CN</AvatarFallback>
 					</Avatar>
 				</DropdownMenuTrigger>

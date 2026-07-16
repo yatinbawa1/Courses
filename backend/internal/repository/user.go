@@ -38,7 +38,7 @@ func (r *UserRepo) UpdateUser(ctx context.Context, user *models.User) error {
 	}
 
 	if user.ProfilePhotoExists != false {
-		setClauses = append(setClauses, fmt.Sprintf("profile_photo_url = $%d", argCounter))
+		setClauses = append(setClauses, fmt.Sprintf("profile_photo_exists = $%d", argCounter))
 		args = append(args, *&user.ProfilePhotoExists)
 		argCounter++
 	}
@@ -157,7 +157,7 @@ func (r *UserRepo) Add(ctx context.Context, usercreds *models.UserAuthCreds) err
 	usercreds.Email = strings.ToLower(usercreds.Email)
 
 	userId := uuid.New()
-	query := `INSERT INTO "User" (user_id,hashed_password, email) values ($1,$2,$3)`
+	query := `INSERT INTO "User" (user_id,hashed_password, email, profile_photo_exists) values ($1,$2,$3, false)`
 
 	_, err := r.db.Exec(ctx, query, userId, usercreds.Password, usercreds.Email)
 

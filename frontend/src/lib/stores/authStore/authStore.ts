@@ -5,7 +5,7 @@ const initialState = {
 	isAuthenticated: false,
 	email: '',
 	name: '',
-	profile_photo_url: '',
+	profile_photo_exists: false,
 	user_id: ''
 };
 

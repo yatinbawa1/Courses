@@ -1,5 +1,4 @@
-<script>
-	import AvatarBadge from '$lib/components/ui/avatar/avatar-badge.svelte';
+<script lang="ts">
 	import AvatarFallback from '$lib/components/ui/avatar/avatar-fallback.svelte';
 	import AvatarImage from '$lib/components/ui/avatar/avatar-image.svelte';
 	import Avatar from '$lib/components/ui/avatar/avatar.svelte';
@@ -16,14 +15,58 @@
 	import { auth } from '$lib/stores/authStore/authStore';
 	import { toast } from 'svelte-sonner';
 	import { invalidateAll } from '$app/navigation';
+	import Spinner from '$lib/components/ui/spinner/spinner.svelte';
 
 	let name = $state('');
+	let input: HTMLInputElement;
+
+	let file: File | null = $state(null);
+	let previewUrl: string | null = $state(null);
+
+	let loading = $state(false);
+	let photoUploadedSuccessfully = $state(false);
+
+	function openFilePicker() {
+		input.click();
+	}
+
+	function handleChange(event: Event) {
+		const target = event.currentTarget as HTMLInputElement;
+		file = target.files?.[0] ?? null;
+
+		if (previewUrl) {
+			URL.revokeObjectURL(previewUrl);
+		}
+
+		if (file) {
+			previewUrl = URL.createObjectURL(file);
+		} else {
+			previewUrl = null;
+		}
+	}
 
 	const HandleSubmit = async () => {
+		const handleLinkForPhotoUpload = await api.get(
+			`/api/account/get-profile-image-url/${$auth.user_id}`
+		);
+
+		if (handleLinkForPhotoUpload.status == 200 && file != null) {
+			loading = true;
+
+			await api.put(handleLinkForPhotoUpload.data.URL, file, {
+				headers: {
+					'Content-type': file.type
+				}
+			});
+
+			loading = false;
+			photoUploadedSuccessfully = true;
+		}
+
 		const res = await api.post('/api/account/update-user', {
 			user_id: $auth.user_id,
 			name: name,
-			profile_photo_url: '',
+			profile_photo_exists: photoUploadedSuccessfully,
 			email: $auth.email
 		});
 
@@ -31,8 +74,7 @@
 			toast.error('Unable to save user data');
 		} else {
 			$auth.name = name;
-			// TODO
-			// Should add the url as well when It has been created
+			$auth.profile_photo_exists = photoUploadedSuccessfully;
 			invalidateAll();
 		}
 	};
@@ -48,12 +90,14 @@
 		>
 		<CardContent class="flex justify-center items-center flex-col gap-5">
 			<Avatar class="h-30 w-30">
-				<AvatarImage src="" />
-				<div
+				<AvatarImage src={previewUrl} />
+				<input bind:this={input} type="file" class="hidden" onchange={handleChange} />
+				<Button
+					onclick={openFilePicker}
 					class="transition-all duration-75 absolute bottom-0 right-0 h-10 w-10 rounded-full text-white hover:bg-gray-600 hover:cursor-pointer bg-gray-400 flex items-center justify-center p-2"
 				>
 					<ImageUp />
-				</div>
+				</Button>
 				<AvatarFallback>
 					<UserRoundPen />
 				</AvatarFallback>
@@ -70,7 +114,11 @@
 				onclick={HandleSubmit}
 				size="lg"
 				class="py-5 w-full hover:bg-mauve-700 hover:cursor-pointer"
-				>Complete Onboarding <SquarePen size="1rem" /></Button
+				>Complete Onboarding {#if loading}
+					<Spinner />
+				{:else}
+					<SquarePen size="1rem" />
+				{/if}</Button
 			>
 		</CardContent>
 		<CardFooter>

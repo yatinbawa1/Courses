@@ -19,7 +19,7 @@ export const load: LayoutLoad = async ({ fetch, url }) => {
 					isAuthenticated: true,
 					email: userData.email,
 					name: userData.name,
-					profile_photo_url: userData.profile_photo_url,
+					profile_photo_exists: userData.profile_photo_exists,
 					user_id: userData.user_id
 				});
 
