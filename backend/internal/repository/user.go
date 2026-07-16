@@ -37,9 +37,9 @@ func (r *UserRepo) UpdateUser(ctx context.Context, user *models.User) error {
 		argCounter++
 	}
 
-	if user.ProfilePhotoURL != nil {
+	if user.ProfilePhotoExists != false {
 		setClauses = append(setClauses, fmt.Sprintf("profile_photo_url = $%d", argCounter))
-		args = append(args, *user.ProfilePhotoURL)
+		args = append(args, *&user.ProfilePhotoExists)
 		argCounter++
 	}
 
@@ -73,12 +73,12 @@ func (r *UserRepo) GetUserData(ctx context.Context, email string) (*models.User,
 	user := &models.User{}
 	lookupEmail := strings.ToLower(email)
 
-	query := `SELECT user_id, name, profile_photo_url FROM "User" WHERE email = $1;`
+	query := `SELECT user_id, name, profile_photo_exists FROM "User" WHERE email = $1;`
 
 	err := r.db.QueryRow(ctx, query, lookupEmail).Scan(
 		&user.User_id,
 		&user.Username,
-		&user.ProfilePhotoURL,
+		&user.ProfilePhotoExists,
 	)
 
 	if err != nil {

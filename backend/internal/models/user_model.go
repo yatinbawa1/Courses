@@ -5,10 +5,10 @@ import (
 )
 
 type User struct {
-	User_id         uuid.UUID `json:"user_id"`
+	User_id         uuid.UUID  `json:"user_id"`
 	Username        *string    `json:"name"`
-	ProfilePhotoURL *string    `json:"profile_photo_url"`
-	Email           string    `json:"email"`
+	ProfilePhotoExists bool    `json:"profile_photo_exists"`
+	Email           string     `json:"email"`
 }
 
 
