@@ -3,12 +3,13 @@ package main
 import (
 	"context"
 	backend "courses"
-	"courses/internal/auth"
 	"courses/internal/config"
 	"courses/internal/database"
 	"courses/internal/handlers"
-	"courses/internal/mailer"
 	"courses/internal/repository"
+	"courses/internal/services/auth"
+	"courses/internal/services/mailer"
+	"courses/internal/services/user"
 	"embed"
 	"io/fs"
 	"log"
@@ -33,6 +34,9 @@ func main() {
 	}
 	defer pool.Close()
 
+	// AWS Client
+	s3Client := database.GetS3Client(logger)
+
 	// This is for local redis client
 	redisClient, err := database.NewRedisClient(config.REDIS_ADDR, "", 0)
 	// redisClient, err := database.NewRedisOnlineClient()
@@ -55,14 +59,15 @@ func main() {
 	otpRepo := repository.NewRedisOTPRepo(redisClient)
 	userRepo := repository.NewUserRepo(pool)
 	refreshRepo := repository.NewRedisRefreshTokenRepo(redisClient)
-	authService := auth.NewAuthService(userRepo, otpRepo, refreshRepo)
+	userService := user.NewUserService(userRepo, s3Client)
+	authService := auth.NewAuthService(otpRepo, refreshRepo, userService)
 
 	// Set up a router
-	mux := handlers.RegisterRoutes(fileServer, logger, authService, resendMailer, strippedFS)
+	mux := handlers.RegisterRoutes(fileServer, logger, authService, userService, resendMailer, strippedFS)
 
 	server := &http.Server{
 		Handler:      mux,
-		Addr:          ":" + config.Port,
+		Addr:         ":" + config.Port,
 		IdleTimeout:  120 * time.Second,
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 10 * time.Second,
@@ -74,7 +79,7 @@ func main() {
 		err := server.ListenAndServe()
 		if err != nil {
 			logger.Fatalf("Error Starting the Server: %s", err)
-		} 
+		}
 	}()
 
 	SigChan := make(chan os.Signal, 1)

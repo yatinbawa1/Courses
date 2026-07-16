@@ -1,8 +1,8 @@
 package authhandler
 
 import (
-	"courses/internal/auth"
 	"courses/internal/config"
+	"courses/internal/services/auth"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -26,9 +26,9 @@ func (m *Refresh) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		rw.WriteHeader(http.StatusUnauthorized)
 		rw.Write([]byte("Unauthorized Access"))
 		return
-	}	
-	
-	newAccessToken, err, email := auth.CreateAccessToken(r.Context(), cookie.Value, m.authService)
+	}
+
+	newAccessToken, userData, err := m.authService.RefreshAccessToken(r.Context(), cookie.Value)
 	if err != nil {
 		if errors.Is(err, auth.ErrExpiredToken) {
 			rw.WriteHeader(http.StatusUnauthorized)
@@ -41,7 +41,7 @@ func (m *Refresh) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	accesscookie := &http.Cookie{
+	http.SetCookie(rw, &http.Cookie{
 		Name:     "user_access_tokens",
 		Value:    newAccessToken,
 		Path:     "/",
@@ -49,19 +49,16 @@ func (m *Refresh) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		HttpOnly: true,
 		Secure:   config.SECURE_COOKIES,
 		SameSite: http.SameSiteLaxMode,
-	}
+	})
 
-	http.SetCookie(rw, accesscookie)
-	userData, err := m.authService.UserRepo.GetUserData(r.Context(), email)
-
-	if err != nil {
+	if userData == nil {
 		rw.WriteHeader(http.StatusInternalServerError)
-		v := fmt.Sprintf("Unable to find user in database %s", err)
+		v := fmt.Sprintf("Unable to find user in database")
 		rw.Write([]byte(v))
 		return
 	}
 
-	rw.Header().Set("Content-Type","application/json")
+	rw.Header().Set("Content-Type", "application/json")
 	rw.WriteHeader(http.StatusOK)
 	_ = json.NewEncoder(rw).Encode(userData)
 }

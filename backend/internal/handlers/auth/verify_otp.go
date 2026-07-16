@@ -1,13 +1,11 @@
 package authhandler
 
 import (
-	"context"
-	"courses/internal/auth"
+	"courses/internal/services/auth"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
-	"time"
 )
 
 type VerifyOTPData struct {
@@ -38,21 +36,7 @@ func (v *VerifyOTP) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
-	defer cancel()
-
-	val, err := v.authService.OtpRepo.VerifyOTP(ctx, user.Email, user.OTP)
-	if err != nil || !val {
-		rw.WriteHeader(http.StatusBadRequest)
-		ans := fmt.Sprintf("Unable to verify OTP! %s", err)
-		rw.Write([]byte(ans))
-		return
-	}
-
-	ctx2, cancel := context.WithTimeout(r.Context(), 5*time.Second)
-	defer cancel()
-
-	err = v.authService.SignUpUsingEmailAndPassword(ctx2, user.Email, user.Password)
+	err = v.authService.VerifyOTPAndSignUp(r.Context(), user.Email, user.Password, user.OTP)
 	if err != nil {
 		rw.WriteHeader(http.StatusBadRequest)
 		rw.Write([]byte(err.Error()))

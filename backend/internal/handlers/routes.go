@@ -1,34 +1,84 @@
 package handlers
 
 import (
-	"courses/internal/auth"
 	accounthandler "courses/internal/handlers/account"
 	authhandler "courses/internal/handlers/auth"
-	"courses/internal/mailer"
 	"courses/internal/middleware"
+	"courses/internal/services/auth"
+	"courses/internal/services/mailer"
+	"courses/internal/services/user"
 	"io"
 	"io/fs"
 	"log"
 	"net/http"
+	"strings"
 )
 
-func RegisterRoutes(fileServer http.Handler, logger *log.Logger, authService *auth.AuthService, mailer mailer.MailSender, frontendFS fs.FS) *http.ServeMux {
-	mux := http.NewServeMux()	
+func RegisterRoutes(
+	fileServer http.Handler,
+	logger *log.Logger,
+	authService *auth.AuthService,
+	userService *user.UserService,
+	mailer mailer.MailSender,
+	frontendFS fs.FS,
+) *http.ServeMux {
 
-	// Unsecure Links
-	mux.Handle("GET /api/auth/refresh", authhandler.NewRefreshHandler(logger, authService))
-	mux.Handle("POST /api/auth/login", authhandler.NewLoginHandler(logger, authService))
-	
-	mux.Handle("POST /api/auth/send-otp", authhandler.NewSendOTPHandler(logger, authService, mailer))
-	mux.Handle("POST /api/auth/send-otp/verify", authhandler.NewVerifyOTP(logger, authService))
-	
-	// Secure Links
-	mux.Handle("POST /api/auth/logout/{user_email}", middleware.CheckAuth(authhandler.NewLogoutHandler(logger, authService)))
-	mux.Handle("POST /api/account/update-user", middleware.CheckAuth(accounthandler.NewUpdateUserHandler(logger, authService)))
-	
+	mux := http.NewServeMux()
 
-	// Frontend - SPA fallback using embedded FS
+	// ------------------------
+	// Public API
+	// ------------------------
+
+	mux.Handle("GET /api/auth/refresh",
+		authhandler.NewRefreshHandler(logger, authService))
+
+	mux.Handle("POST /api/auth/login",
+		authhandler.NewLoginHandler(logger, authService))
+
+	mux.Handle("POST /api/auth/send-otp",
+		authhandler.NewSendOTPHandler(logger, authService, mailer))
+
+	mux.Handle("POST /api/auth/send-otp/verify",
+		authhandler.NewVerifyOTP(logger, authService))
+
+	// ------------------------
+	// Protected API
+	// ------------------------
+
+	mux.Handle("POST /api/auth/logout/{user_email}",
+		middleware.CheckAuth(authhandler.NewLogoutHandler(logger, authService)))
+
+	mux.Handle("POST /api/account/update-user",
+		middleware.CheckAuth(accounthandler.NewUpdateUserHandler(logger, userService)))
+
+	mux.Handle("GET /api/account/get-profile-image-url/{user_id}",
+		accounthandler.NewGetProfilePhotoUploadUrl(userService))
+
+	// ------------------------
+	// Frontend
+	// ------------------------
+
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+
+		// API routes should never reach the SPA fallback.
+		if strings.HasPrefix(r.URL.Path, "/api/") {
+			http.NotFound(w, r)
+			return
+		}
+
+		// If the requested file exists in the embedded frontend,
+		// let the embedded file server serve it.
+		path := strings.TrimPrefix(r.URL.Path, "/")
+		if path == "" {
+			path = "index.html"
+		}
+
+		if _, err := frontendFS.Open(path); err == nil {
+			fileServer.ServeHTTP(w, r)
+			return
+		}
+
+		// Otherwise serve index.html so SvelteKit can handle routing.
 		f, err := frontendFS.Open("index.html")
 		if err != nil {
 			http.NotFound(w, r)
@@ -44,5 +94,6 @@ func RegisterRoutes(fileServer http.Handler, logger *log.Logger, authService *au
 
 		http.ServeContent(w, r, stat.Name(), stat.ModTime(), f.(io.ReadSeeker))
 	})
+
 	return mux
 }

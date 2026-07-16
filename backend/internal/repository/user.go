@@ -2,8 +2,8 @@ package repository
 
 import (
 	"context"
-	"courses/internal/auth"
 	"courses/internal/models"
+	"courses/internal/services/user"
 	"errors"
 	"fmt"
 	"strings"
@@ -26,7 +26,7 @@ func NewUserRepo(db *pgxpool.Pool) *UserRepo {
 	return &UserRepo{db: db}
 }
 
-func (r *UserRepo) SaveUser(ctx context.Context, user *models.User) error {
+func (r *UserRepo) UpdateUser(ctx context.Context, user *models.User) error {
 	var args []any
 	var setClauses []string
 	argCounter := 1
@@ -44,7 +44,7 @@ func (r *UserRepo) SaveUser(ctx context.Context, user *models.User) error {
 	}
 
 	if len(setClauses) == 0 {
-		return nil 
+		return nil
 	}
 
 	args = append(args, user.User_id)
@@ -55,7 +55,6 @@ func (r *UserRepo) SaveUser(ctx context.Context, user *models.User) error {
 		strings.Join(setClauses, ", "),
 		whereClause,
 	)
-
 
 	result, err := r.db.Exec(ctx, query, args...)
 	if err != nil {
@@ -71,24 +70,46 @@ func (r *UserRepo) SaveUser(ctx context.Context, user *models.User) error {
 }
 
 func (r *UserRepo) GetUserData(ctx context.Context, email string) (*models.User, error) {
-    user := &models.User{}
-    lookupEmail := strings.ToLower(email)
+	user := &models.User{}
+	lookupEmail := strings.ToLower(email)
 
-    query := `SELECT user_id, name, profile_photo_url FROM "User" WHERE email = $1;`
-    
-    err := r.db.QueryRow(ctx, query, lookupEmail).Scan(
-        &user.User_id,         
-        &user.Username,        
-        &user.ProfilePhotoURL,
-    )
+	query := `SELECT user_id, name, profile_photo_url FROM "User" WHERE email = $1;`
 
-    if err != nil {
-        return nil, fmt.Errorf("Failed To Find User! Internal Error %w", err)
-    }
+	err := r.db.QueryRow(ctx, query, lookupEmail).Scan(
+		&user.User_id,
+		&user.Username,
+		&user.ProfilePhotoURL,
+	)
 
-    user.Email = lookupEmail
+	if err != nil {
+		return nil, fmt.Errorf("Failed To Find User! Internal Error %w", err)
+	}
 
-    return user, nil
+	user.Email = lookupEmail
+
+	return user, nil
+}
+
+func (r *UserRepo) CheckIfUserIDExists(ctx context.Context, userID string) (bool, error) {
+	userID = strings.ToLower(userID)
+
+	query := `SELECT EXISTS (
+    SELECT 1 
+    FROM "User" 
+    WHERE user_id = $1
+	);`
+
+	var exists bool
+	err := r.db.QueryRow(ctx, query, userID).Scan(&exists)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return false, nil
+		}
+
+		return false, fmt.Errorf("Failed To Check UserID! Internal Error %w", err)
+	}
+
+	return exists, nil
 }
 
 func (r *UserRepo) CheckIfEmailExists(ctx context.Context, email string) (bool, error) {
@@ -122,7 +143,7 @@ func (r *UserRepo) GetPasswordForEmail(ctx context.Context, email string) ([]byt
 
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return []byte{}, auth.ErrUserDoesNotExist
+			return []byte{}, user.ErrUserDoesNotExist
 		} else {
 			// A Internal Log for Error Can Be Added Here
 			return []byte{}, err
@@ -132,13 +153,13 @@ func (r *UserRepo) GetPasswordForEmail(ctx context.Context, email string) ([]byt
 	return []byte(storedHash), nil
 }
 
-func (r *UserRepo) Add(ctx context.Context, user *models.UserAuthCreds) error {
-	user.Email = strings.ToLower(user.Email)
+func (r *UserRepo) Add(ctx context.Context, usercreds *models.UserAuthCreds) error {
+	usercreds.Email = strings.ToLower(usercreds.Email)
 
 	userId := uuid.New()
 	query := `INSERT INTO "User" (user_id,hashed_password, email) values ($1,$2,$3)`
 
-	_, err := r.db.Exec(ctx, query, userId, user.Password, user.Email)
+	_, err := r.db.Exec(ctx, query, userId, usercreds.Password, usercreds.Email)
 
 	if err != nil {
 		var pgErr *pgconn.PgError

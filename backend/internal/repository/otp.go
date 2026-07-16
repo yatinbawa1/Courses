@@ -27,24 +27,26 @@ func (r *RedisOTPRepo) SaveOTP(ctx context.Context, email string, code string, t
 	return nil
 }
 
-func (r *RedisOTPRepo) VerifyOTP(ctx context.Context, email string, code string) (bool, error) {
+func (r *RedisOTPRepo) GetOTPForUser(ctx context.Context, email string) (string, error) {
 	key := fmt.Sprintf("otp:%s", email)
 	storedCode, err := r.rdbs.Get(ctx, key).Result()
 
 	if err == redis.Nil {
-		// Key Does Not Exist
-		return false, nil
+		return "", nil
 	} else if err != nil {
-		// Some Internal Error
-		return false, fmt.Errorf("failed to retrieve OTP from redis: %w", err)
+		return "", fmt.Errorf("failed to retrieve OTP from redis: %w", err)
 	}
 
-	if storedCode != code {
-		return false, nil
+	return storedCode, nil
+}
+
+func (r *RedisOTPRepo) DeleteOTPForUser(ctx context.Context, email string) error {
+	key := fmt.Sprintf("otp:%s", email)
+	_, err := r.rdbs.Del(ctx, key).Result()
+
+	if err != nil {
+		return err
 	}
 
-	// Delete Used Key
-	_ = r.rdbs.Del(ctx, key)
-
-	return true, nil
+	return nil
 }

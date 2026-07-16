@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	"courses/internal/auth"
+	"courses/internal/services/auth"
 	"errors"
 	"net/http"
 
