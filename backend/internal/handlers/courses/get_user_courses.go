@@ -17,6 +17,7 @@ func NewGetUserCoursesHandler(courseService *course.CourseService) *GetUserCours
 
 func (g *GetUserCourses) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	userID, err := auth.GetUserIDFromContext(r.Context())
+
 	if err != nil {
 		rw.WriteHeader(http.StatusUnauthorized)
 		rw.Write([]byte("Unauthorized"))

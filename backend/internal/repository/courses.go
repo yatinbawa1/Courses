@@ -28,13 +28,42 @@ func (c *CoursesRepo) GetCourseDataForUser(ctx context.Context,user_id uuid.UUID
 			c.creation_date,
 			c.course_thumbnail
 		FROM 
-			User_Owned_Courses uoc
+			"User_Owned_Courses" uoc
 		INNER JOIN 
-			Course c ON uoc.course_id = c.course_id
+			"Course" c ON uoc.course_id = c.course_id
 		WHERE 
 			uoc.user_id = $1;
 	`
 	rows, err := c.db.Query(ctx, query, user_id)
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	courses, err := pgx.CollectRows(rows, pgx.RowToStructByName[models.Course])
+	if err != nil {
+		return nil, err
+	}
+
+	return courses, nil
+}
+
+
+func (c *CoursesRepo) GetTopCourses(ctx context.Context) ([]models.Course, error) {
+	query := `
+	SELECT 
+        course_id, 
+        course_name, 
+        course_description, 
+        creation_date,
+        course_thumbnail
+    FROM 
+        "Course"
+    LIMIT 5;
+	`
+	
+			rows, err := c.db.Query(ctx, query)
 	if err != nil {
 		return nil, err
 	}

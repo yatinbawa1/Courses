@@ -44,6 +44,7 @@ func RegisterRoutes(
 	mux.Handle("POST /api/auth/send-otp/verify",
 		authhandler.NewVerifyOTP(logger, authService))
 
+	mux.Handle("GET /api/courses/get-top-courses/", courseshandler.NewGetTopCourses(courseService))
 	// ------------------------
 	// Protected API
 	// ------------------------
@@ -60,6 +61,7 @@ func RegisterRoutes(
 	mux.Handle("GET /api/courses/get-user-courses",
 		middleware.CheckAuth(courseshandler.NewGetUserCoursesHandler(courseService)))
 
+	
 	// ------------------------
 	// Frontend
 	// ------------------------

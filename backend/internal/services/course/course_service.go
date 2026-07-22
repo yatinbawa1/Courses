@@ -10,6 +10,7 @@ import (
 
 type CourseRepo interface {
 	GetCourseDataForUser(ctx context.Context, user_id uuid.UUID) ([]models.Course,error)
+	GetTopCourses(ctx context.Context)([]models.Course, error)
 }
 
 type CourseService struct {
@@ -30,3 +31,13 @@ func (c *CourseService) GetAllCoursesForUser(ctx context.Context, userID uuid.UU
 }
 
 	
+
+func (c *CourseService) GetTopCourses(ctx context.Context) ([]models.Course) {
+	courses, err := c.courseRepo.GetTopCourses(ctx)
+	
+	if err != nil {
+		return []models.Course{}
+	}
+
+	return courses
+}
