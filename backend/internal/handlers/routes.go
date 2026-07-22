@@ -3,8 +3,10 @@ package handlers
 import (
 	accounthandler "courses/internal/handlers/account"
 	authhandler "courses/internal/handlers/auth"
+	courseshandler "courses/internal/handlers/courses"
 	"courses/internal/middleware"
 	"courses/internal/services/auth"
+	"courses/internal/services/course"
 	"courses/internal/services/mailer"
 	"courses/internal/services/user"
 	"io"
@@ -21,6 +23,7 @@ func RegisterRoutes(
 	userService *user.UserService,
 	mailer mailer.MailSender,
 	frontendFS fs.FS,
+	courseService *course.CourseService,
 ) *http.ServeMux {
 
 	mux := http.NewServeMux()
@@ -45,14 +48,17 @@ func RegisterRoutes(
 	// Protected API
 	// ------------------------
 
-	mux.Handle("POST /api/auth/logout/{user_email}",
+	mux.Handle("POST /api/auth/logout",
 		middleware.CheckAuth(authhandler.NewLogoutHandler(logger, authService)))
 
 	mux.Handle("POST /api/account/update-user",
 		middleware.CheckAuth(accounthandler.NewUpdateUserHandler(logger, userService)))
 
-	mux.Handle("GET /api/account/get-profile-image-url/{user_id}",
-		accounthandler.NewGetProfilePhotoUploadUrl(userService))
+	mux.Handle("GET /api/account/get-profile-image-url",
+		middleware.CheckAuth(accounthandler.NewGetProfilePhotoUploadUrl(userService)))
+
+	mux.Handle("GET /api/courses/get-user-courses",
+		middleware.CheckAuth(courseshandler.NewGetUserCoursesHandler(courseService)))
 
 	// ------------------------
 	// Frontend

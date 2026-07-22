@@ -25,6 +25,7 @@
     "dbname",
     "dbpool",
     "favourite",
+    "Geomini",
     "godotenv",
     "jackc",
     "pgconn",

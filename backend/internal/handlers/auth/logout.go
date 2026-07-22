@@ -17,8 +17,14 @@ func NewLogoutHandler(l *log.Logger, a *auth.AuthService) *Logout {
 }
 
 func (l *Logout) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
-	userEmail := r.PathValue("user_email")
-	err := l.authService.DeleteRefreshToken(r.Context(), userEmail)
+	userEmail, err := auth.GetEmailFromContext(r.Context())
+	if err != nil {
+		rw.WriteHeader(http.StatusUnauthorized)
+		rw.Write([]byte("Unauthorized"))
+		return
+	}
+
+	err = l.authService.DeleteRefreshToken(r.Context(), userEmail)
 	if err != nil {
 		rw.WriteHeader(http.StatusInternalServerError)
 		rw.Write([]byte("Unable to delete refresh token"))

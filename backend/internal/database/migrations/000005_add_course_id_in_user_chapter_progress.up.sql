@@ -1,0 +1,2 @@
+ALTER TABLE "User_Chapter_Progress"
+ADD COLUMN course_id VARCHAR NOT NULL REFERENCES "Course"(course_id) ON DELETE CASCADE;

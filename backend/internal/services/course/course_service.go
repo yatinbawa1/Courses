@@ -1,18 +1,32 @@
-package courses
+package course
 
 import (
+	"context"
 	"courses/internal/models"
 
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/google/uuid"
 )
 
-type CourseService struct {
-	courseRepo CourseRepo
+type CourseRepo interface {
+	GetCourseDataForUser(ctx context.Context, user_id uuid.UUID) ([]models.Course,error)
 }
 
-type CourseRepo interface {
-	GetCoursesForUser(user_id uuid.UUID) []models.Course
-	GetCourseData(course_id string) *models.Course
-	GetCourseCounter(course_id string) []models.CourseChapter
-	GetChapterContent(chapter_id string) models.AssetType
+type CourseService struct {
+	courseRepo CourseRepo
+	s3Client *s3.Client
 }
+
+func NewCourseService(c CourseRepo, s *s3.Client) *CourseService {
+	return &CourseService{c,s}
+}
+
+func (c *CourseService) GetAllCoursesForUser(ctx context.Context, userID uuid.UUID) []models.Course {
+	courses, err := c.courseRepo.GetCourseDataForUser(ctx, userID)
+	if err != nil {
+		return []models.Course{}
+	}
+	return courses
+}
+
+	

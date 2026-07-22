@@ -11,17 +11,17 @@ func (a *AuthService) LoginWithEmailPassword(ctx context.Context, email string, 
 		return "", "", nil, err
 	}
 
-	refreshToken, err := a.CreateRefreshToken(ctx, email)
+	userData, err := a.User.GetUserData(ctx, email)
+	if err != nil {
+		return "", "", nil, err
+	}
+
+	refreshToken, err := a.CreateRefreshToken(ctx, email, userData.User_id)
 	if err != nil {
 		return "", "", nil, err
 	}
 
 	accessToken, err := a.CreateAccessToken(ctx, refreshToken)
-	if err != nil {
-		return "", "", nil, err
-	}
-
-	userData, err := a.User.GetUserData(ctx, email)
 	if err != nil {
 		return "", "", nil, err
 	}

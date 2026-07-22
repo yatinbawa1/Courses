@@ -14,6 +14,7 @@
 	import InputGroupAddon from '$lib/components/ui/input-group/input-group-addon.svelte';
 	import InputGroupInput from '$lib/components/ui/input-group/input-group-input.svelte';
 	import InputGroup from '$lib/components/ui/input-group/input-group.svelte';
+	import Spinner from '$lib/components/ui/spinner/spinner.svelte';
 	import { auth, logoutUser } from '$lib/stores/authStore/authStore';
 	import {
 		Search,
@@ -124,7 +125,9 @@
 				<DropdownMenuTrigger>
 					<Avatar>
 						<AvatarImage src={profileUrl} />
-						<AvatarFallback>CN</AvatarFallback>
+						<AvatarFallback>
+							<Spinner />
+						</AvatarFallback>
 					</Avatar>
 				</DropdownMenuTrigger>
 				<DropdownMenuContent class="bg-gray-800">

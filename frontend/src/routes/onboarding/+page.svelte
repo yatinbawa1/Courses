@@ -46,36 +46,44 @@
 	}
 
 	const HandleSubmit = async () => {
-		const handleLinkForPhotoUpload = await api.get(
-			`/api/account/get-profile-image-url/${$auth.user_id}`
-		);
+		try {
+			if (name.trim() === '') {
+				toast.error('Username is required');
+				return;
+			}
 
-		if (handleLinkForPhotoUpload.status == 200 && file != null) {
 			loading = true;
 
-			await api.put(handleLinkForPhotoUpload.data.URL, file, {
-				headers: {
-					'Content-type': file.type
-				}
+			const handleLinkForPhotoUpload = await api.get('/api/account/get-profile-image-url');
+
+			if (handleLinkForPhotoUpload.status == 200 && file != null) {
+				await api.put(handleLinkForPhotoUpload.data.URL, file, {
+					headers: {
+						'Content-type': file.type
+					}
+				});
+
+				photoUploadedSuccessfully = true;
+			}
+
+			const res = await api.post('/api/account/update-user', {
+				user_id: $auth.user_id,
+				name: name,
+				profile_photo_exists: photoUploadedSuccessfully,
+				email: $auth.email
 			});
 
+			if (res.status != 200) {
+				toast.error('Unable to save user data');
+			} else {
+				$auth.name = name;
+				$auth.profile_photo_exists = photoUploadedSuccessfully;
+				invalidateAll();
+			}
+		} catch (err) {
+			toast.error('Something went wrong');
+		} finally {
 			loading = false;
-			photoUploadedSuccessfully = true;
-		}
-
-		const res = await api.post('/api/account/update-user', {
-			user_id: $auth.user_id,
-			name: name,
-			profile_photo_exists: photoUploadedSuccessfully,
-			email: $auth.email
-		});
-
-		if (res.status != 200) {
-			toast.error('Unable to save user data');
-		} else {
-			$auth.name = name;
-			$auth.profile_photo_exists = photoUploadedSuccessfully;
-			invalidateAll();
 		}
 	};
 </script>

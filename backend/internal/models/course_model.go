@@ -11,6 +11,7 @@ type Course struct {
 	CourseName        string    `json:"course_name"`
 	CourseDescription string    `json:"course_description"`
 	CreationDate      time.Time `json:"creation_date"`
+	CourseThumbnail   string 	`json:"course_thumbnail"`
 }
 
 type AssetType string

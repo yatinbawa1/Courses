@@ -10,6 +10,7 @@ import (
 	"courses/internal/models"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 )
 
 var (
@@ -20,11 +21,44 @@ type contextKey string
 
 const ClaimsKey contextKey = "claims"
 
-func (a *AuthService) CreateRefreshToken(ctx context.Context, email string) (string, error) {
+func GetClaimsFromContext(ctx context.Context) (jwt.MapClaims, error) {
+	claims, ok := ctx.Value(ClaimsKey).(jwt.MapClaims)
+	if !ok {
+		return nil, fmt.Errorf("claims not found in context")
+	}
+	return claims, nil
+}
+
+func GetUserIDFromContext(ctx context.Context) (uuid.UUID, error) {
+	claims, err := GetClaimsFromContext(ctx)
+	if err != nil {
+		return uuid.Nil, err
+	}
+	userIDStr, ok := claims["user_id"].(string)
+	if !ok {
+		return uuid.Nil, fmt.Errorf("user_id not found in claims")
+	}
+	return uuid.Parse(userIDStr)
+}
+
+func GetEmailFromContext(ctx context.Context) (string, error) {
+	claims, err := GetClaimsFromContext(ctx)
+	if err != nil {
+		return "", err
+	}
+	email, ok := claims["email"].(string)
+	if !ok {
+		return "", fmt.Errorf("email not found in claims")
+	}
+	return email, nil
+}
+
+func (a *AuthService) CreateRefreshToken(ctx context.Context, email string, userID uuid.UUID) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"email": email,
-		"exp":   time.Now().Add(time.Hour * 24 * 30).Unix(),
-		"type":  "Refresh",
+		"email":   email,
+		"user_id": userID.String(),
+		"exp":     time.Now().Add(time.Hour * 24 * 30).Unix(),
+		"type":    "Refresh",
 	})
 
 	tokenString, err := token.SignedString([]byte(config.JWTSecret))
@@ -50,22 +84,26 @@ func (a *AuthService) CreateAccessToken(ctx context.Context, refreshToken string
 	}
 
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-		if claims["type"].(string) != "Refresh" {
+		tokenType, _ := claims["type"].(string)
+		if tokenType != "Refresh" {
 			return "", fmt.Errorf("Invalid token type")
 		}
 
-		exist, err := a.RefreshRepo.VerifyIfRefreshTokenIsLive(ctx, refreshToken, claims["email"].(string))
+		email, _ := claims["email"].(string)
+		exist, err := a.RefreshRepo.VerifyIfRefreshTokenIsLive(ctx, refreshToken, email)
 		if err != nil {
 			return "", ErrExpiredToken
 		}
 
 		if exist {
+			userID, _ := claims["user_id"].(string)
 			accessToken, err := jwt.NewWithClaims(
 				jwt.SigningMethodHS256,
 				jwt.MapClaims{
-					"email": claims["email"].(string),
-					"exp":   time.Now().Add(time.Hour).Unix(),
-					"type":  "Access",
+					"email":   email,
+					"user_id": userID,
+					"exp":     time.Now().Add(time.Hour).Unix(),
+					"type":    "Access",
 				}).SignedString([]byte(config.JWTSecret))
 
 			if err != nil {
@@ -90,7 +128,7 @@ func (a *AuthService) RefreshAccessToken(ctx context.Context, refreshToken strin
 	})
 
 	claims, _ := token.Claims.(jwt.MapClaims)
-	email := claims["email"].(string)
+	email, _ := claims["email"].(string)
 
 	userData, err := a.User.GetUserData(ctx, email)
 	if err != nil {
@@ -110,8 +148,10 @@ func (a *AuthService) VerifyRefreshToken(ctx context.Context, tokenString string
 	}
 
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-		if claims["type"].(string) == "Refresh" {
-			exist, err := a.RefreshRepo.VerifyIfRefreshTokenIsLive(ctx, tokenString, claims["email"].(string))
+		tokenType, _ := claims["type"].(string)
+		if tokenType == "Refresh" {
+			email, _ := claims["email"].(string)
+			exist, err := a.RefreshRepo.VerifyIfRefreshTokenIsLive(ctx, tokenString, email)
 			if err != nil {
 				return false, err
 			}
@@ -133,7 +173,8 @@ func VerifyAccessToken(cntx context.Context, tokenString string) (context.Contex
 	}
 
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-		if claims["type"].(string) == "Access" {
+		tokenType, _ := claims["type"].(string)
+		if tokenType == "Access" {
 			ctx := context.WithValue(cntx, ClaimsKey, claims)
 			return ctx, nil
 		}

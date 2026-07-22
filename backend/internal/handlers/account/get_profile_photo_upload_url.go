@@ -1,6 +1,7 @@
 package accounthandler
 
 import (
+	"courses/internal/services/auth"
 	"courses/internal/services/user"
 	"encoding/json"
 	"net/http"
@@ -15,9 +16,14 @@ func NewGetProfilePhotoUploadUrl(userService *user.UserService) *GetProfilePhoto
 }
 
 func (g *GetProfilePhotoUploadUrl) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
-	user_id := r.PathValue("user_id")
+	userID, err := auth.GetUserIDFromContext(r.Context())
+	if err != nil {
+		rw.WriteHeader(http.StatusUnauthorized)
+		rw.Write([]byte("Unauthorized"))
+		return
+	}
 
-	resp, err := g.userService.CreatePresignedUploadURLForProfilePhoto(r.Context(), user_id)
+	resp, err := g.userService.CreatePresignedUploadURLForProfilePhoto(r.Context(), userID.String())
 	if err != nil {
 		rw.WriteHeader(http.StatusInternalServerError)
 		rw.Write([]byte("Unable to create a presigned url"))

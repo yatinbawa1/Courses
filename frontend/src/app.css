@@ -6,10 +6,16 @@
 
 @custom-variant dark (&:is(.dark *));
 
+@import url('https://fonts.googleapis.com/css2?family=Geomini:wght@200..800&display=swap');
+
 .playfair {
 	font-family: 'Playfair-Display';
 }
 
+.geomini {
+	font-family: 'Geomini', sans-serif;
+	font-optical-sizing: auto;
+}
 :root {
 	--background: oklch(1 0 0);
 	--foreground: oklch(0.145 0 0);

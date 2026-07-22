@@ -8,6 +8,7 @@ import (
 	"courses/internal/handlers"
 	"courses/internal/repository"
 	"courses/internal/services/auth"
+	"courses/internal/services/course"
 	"courses/internal/services/mailer"
 	"courses/internal/services/user"
 	"embed"
@@ -58,12 +59,16 @@ func main() {
 	resendMailer := mailer.NewResendMailer()
 	otpRepo := repository.NewRedisOTPRepo(redisClient)
 	userRepo := repository.NewUserRepo(pool)
+	courseRepo := repository.NewCourseRepo(pool, userRepo)
+
 	refreshRepo := repository.NewRedisRefreshTokenRepo(redisClient)
 	userService := user.NewUserService(userRepo, s3Client)
 	authService := auth.NewAuthService(otpRepo, refreshRepo, userService)
-
+	courseService := course.NewCourseService(courseRepo, s3Client)
+	
 	// Set up a router
-	mux := handlers.RegisterRoutes(fileServer, logger, authService, userService, resendMailer, strippedFS)
+	mux := handlers.RegisterRoutes(fileServer, logger, authService,
+		 userService, resendMailer, strippedFS, courseService)
 
 	server := &http.Server{
 		Handler:      mux,
